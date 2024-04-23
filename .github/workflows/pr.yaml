@@ -1,0 +1,50 @@
+name: ⬣ Checks (Test + Lint + Generate)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  checks:
+    name: Checks (Test + Lint + Generate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.22
+
+      - name: Go Generate
+        run: |
+          go install github.com/vektra/mockery/v3@latest
+          go generate ./...
+          # ./scripts/delta_check.sh
+
+      - name: Install required dependencies
+        run: |
+          go get -u github.com/jstemmer/go-junit-report
+          go get -u github.com/mattn/goveralls
+
+      - name: Run GolangCI-Lint Action by building from repository
+        uses: golangci/golangci-lint-action@v3
+        with:
+          args: --timeout=30m
+        env:
+          # GitHub token for annotations (optional)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run tests with coverage
+        run: |
+          go test -v -coverprofile=coverage.txt -covermode=atomic  ./...
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
