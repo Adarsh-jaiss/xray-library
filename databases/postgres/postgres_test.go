@@ -32,7 +32,7 @@ func TestSchema(t *testing.T) {
 	columns := []string{"name", "type", "IsNullable", "key", "Description", "Extra", "IsPrimary", "IsIndex"}
 	mockRows := sqlmock.NewRows(columns).AddRow("id", "int", "No", "PRIMARY", "This is the primary key of the table to identify users", "auto_increment", "true", "true")
 
-	mock.ExpectQuery(regexp.QuoteMeta(fmt.Sprintf(POSTGRES_SCHEMA_QUERY, table_name))).WillReturnRows(mockRows)
+	mock.ExpectQuery(regexp.QuoteMeta(POSTGRES_SCHEMA_QUERY)).WithArgs(table_name).WillReturnRows(mockRows)
 
 	m, err := NewPostgres(db)
 	if err != nil {
@@ -90,7 +90,7 @@ func TestGetTableName(t *testing.T) {
 		AddRow(tableList[0]).
 		AddRow(tableList[1]).
 		AddRow(tableList[2])
-	mock.ExpectQuery(regexp.QuoteMeta(fmt.Sprintf(POSTGRES_TABLE_LIST_QUERY, DatabaseName))).WillReturnRows(rows)
+	mock.ExpectQuery(regexp.QuoteMeta(POSTGRES_TABLE_LIST_QUERY)).WithArgs(DatabaseName).WillReturnRows(rows)
 
 	p, err := NewPostgres(db)
 	if err != nil {

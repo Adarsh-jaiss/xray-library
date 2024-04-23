@@ -15,10 +15,10 @@ var DB_PASSWORD = "DB_PASSWORD"
 
 const (
 	// POSTGRES_SCHEMA_QUERY is the SQL query used to describe a table schema in PostgreSQL.
-	POSTGRES_SCHEMA_QUERY = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = %s;"
+	POSTGRES_SCHEMA_QUERY = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = ?;"
 
 	// POSTGRES_TABLE_LIST_QUERY is the SQL query used to list all tables in a schema in PostgreSQL.
-	POSTGRES_TABLE_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema= %s AND table_type='BASE TABLE';"
+	POSTGRES_TABLE_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema= ? AND table_type='BASE TABLE';"
 )
 
 // Postgres is a PostgreSQL implementation of the ISQL interface.
@@ -59,7 +59,7 @@ func (p *Postgres) Schema(table string) (types.Table, error) {
 	var response types.Table
 
 	// execute the sql statement
-	rows, err := p.Client.Query(fmt.Sprintf(POSTGRES_SCHEMA_QUERY, table))
+	rows, err := p.Client.Query(POSTGRES_SCHEMA_QUERY, table)
 	if err != nil {
 		return response, fmt.Errorf("error executing sql statement: %v", err)
 	}
@@ -148,7 +148,7 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 // Tables returns a list of all tables in the given database.
 // It returns an error if the SQL query fails.
 func (p *Postgres) Tables(databaseName string) ([]string, error) {
-	rows, err := p.Client.Query(fmt.Sprintf(POSTGRES_TABLE_LIST_QUERY, databaseName))
+	rows, err := p.Client.Query(POSTGRES_TABLE_LIST_QUERY, databaseName)
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
