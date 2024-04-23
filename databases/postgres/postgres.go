@@ -15,10 +15,10 @@ var DB_PASSWORD = "DB_PASSWORD"
 
 const (
 	// POSTGRES_SCHEMA_QUERY is the SQL query used to describe a table schema in PostgreSQL.
-	POSTGRES_SCHEMA_QUERY = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = ?;"
+	POSTGRES_SCHEMA_QUERY = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;"
 
 	// POSTGRES_TABLE_LIST_QUERY is the SQL query used to list all tables in a schema in PostgreSQL.
-	POSTGRES_TABLE_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema= ? AND table_type='BASE TABLE';"
+	POSTGRES_TABLE_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema=$1 AND table_type='BASE TABLE';"
 )
 
 // Postgres is a PostgreSQL implementation of the ISQL interface.
