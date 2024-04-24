@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"os"
-
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
+	"os"
+	"strings"
 )
 
 // DB_PASSWORD is the environment variable that holds the database password.
@@ -15,10 +15,30 @@ var DB_PASSWORD = "DB_PASSWORD"
 
 const (
 	// POSTGRES_SCHEMA_QUERY is the SQL query used to describe a table schema in PostgreSQL.
-	POSTGRES_SCHEMA_QUERY = "SELECT column_name, data_type, character_maximum_length FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;"
+	// POSTGRES_SCHEMA_QUERY = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1;"
+	POSTGRES_SCHEMA_QUERY = `
+	SELECT 
+    	c.column_name AS name,
+    	c.data_type AS type,
+    	c.is_nullable AS is_nullable,
+    	c.column_default AS default_value,
+    	c.character_maximum_length AS character_maximum_length,
+    	c.ordinal_position AS ordinal_position,
+    	CASE WHEN c.column_default IS NOT NULL THEN true ELSE false END AS visibility,
+    	CASE WHEN kcu.column_name IS NOT NULL THEN true ELSE false END AS is_primary,
+    	CASE WHEN c.is_updatable = 'YES' THEN true ELSE false END AS is_updatable
+	FROM 
+    	information_schema.columns c
+	LEFT JOIN 
+    	information_schema.key_column_usage kcu 
+	ON 
+    	c.table_name = kcu.table_name AND c.column_name = kcu.column_name
+	WHERE 
+    	c.table_name = $1;
+	`
 
 	// POSTGRES_TABLE_LIST_QUERY is the SQL query used to list all tables in a schema in PostgreSQL.
-	POSTGRES_TABLE_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema=$1 AND table_type='BASE TABLE';"
+	POSTGRES_TABLE_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema= 'public' AND table_type='BASE TABLE' AND table_catalog = $1;"
 )
 
 // Postgres is a PostgreSQL implementation of the ISQL interface.
@@ -70,7 +90,17 @@ func (p *Postgres) Schema(table string) (types.Table, error) {
 	var columns []types.Column
 	for rows.Next() {
 		var column types.Column
-		if err := rows.Scan(&column.Name, &column.Type, &column.IsNullable, &column.Key, &column.DefaultValue, &column.Extra, &column.IsPrimary, &column.IsIndex); err != nil {
+		if err := rows.Scan(
+			&column.Name,
+			&column.Type,
+			&column.IsNullable,
+			&column.DefaultValue,
+			&column.CharacterMaximumLength,
+			&column.OrdinalPosition,
+			&column.Visibility,
+			&column.IsPrimary,
+			&column.IsUpdatable,
+		); err != nil {
 			return response, fmt.Errorf("error scanning rows: %v", err)
 		}
 		column.Description = ""      // default description
@@ -85,7 +115,8 @@ func (p *Postgres) Schema(table string) (types.Table, error) {
 		return response, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	return types.Table{
+	var tbl types.Table
+	tbl, err = types.Table{
 		Name:        table,
 		Columns:     columns,
 		ColumnCount: int64(len(columns)),
@@ -93,6 +124,8 @@ func (p *Postgres) Schema(table string) (types.Table, error) {
 		Metatags:    []string{},
 	}, nil
 
+	fmt.Println(TableToString(tbl))
+	return tbl, nil
 }
 
 // Execute executes a SQL query and returns the result as a JSON byte slice.
@@ -169,4 +202,31 @@ func (p *Postgres) Tables(databaseName string) ([]string, error) {
 
 	return tables, nil
 
+}
+
+// TableToString returns a string representation of a table.
+// It is used for debugging purposes.
+
+func TableToString(t types.Table) string {
+	var cols []string
+	for _, col := range t.Columns {
+		cols = append(cols, fmt.Sprintf(
+			"Name: %s, Type: %s, IsNullable: %v, DefaultValue: %v, CharacterMaximumLength: %v, OrdinalPosition: %v, Visibility: %v, IsPrimary: %v, IsUpdatable: %v",
+			col.Name,
+			col.Type,
+			col.IsNullable,
+			col.DefaultValue,
+			col.CharacterMaximumLength,
+			col.OrdinalPosition,
+			col.Visibility,
+			col.IsPrimary,
+			col.IsUpdatable,
+		))
+	}
+	return fmt.Sprintf(
+		"Table: %s, Columns: [%s], ColumnCount: %d",
+		t.Name,
+		strings.Join(cols, "; "),
+		t.ColumnCount,
+	)
 }
