@@ -29,8 +29,8 @@ func TestSchema(t *testing.T) {
 
 	table_name := "user"
 
-	columns := []string{"name", "type", "IsNullable", "key", "Description", "Extra", "IsPrimary", "IsIndex"}
-	mockRows := sqlmock.NewRows(columns).AddRow("id", "int", "No", "PRIMARY", "This is the primary key of the table to identify users", "auto_increment", "true", "true")
+	columns := []string{"name", "type", "IsNullable", "DefaultValue", "CharacterMaximumLength", "OrdinalPosition", "Visibility", "IsPrimary", "IsUpdatable"}
+	mockRows := sqlmock.NewRows(columns).AddRow("id", "int", "No", "", 0, 1, true, true, true)
 
 	mock.ExpectQuery(regexp.QuoteMeta(POSTGRES_SCHEMA_QUERY)).WithArgs(table_name).WillReturnRows(mockRows)
 
@@ -48,7 +48,6 @@ func TestSchema(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there was unfulfilled expectations: %s", err)
 	}
-
 }
 
 func TestExecute(t *testing.T) {

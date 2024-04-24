@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-
+	_"github.com/lib/pq"
 	"github.com/thesaas-company/xray"
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
@@ -20,10 +20,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Connected to database")
 	data, err := client.Tables(config.DatabaseName)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Tables :", data)
+
+
 	var response []types.Table
 	for _, v := range data {
 		table, err := client.Schema(v)
@@ -32,5 +36,5 @@ func main() {
 		}
 		response = append(response, table)
 	}
-	fmt.Println(response)
+	
 }
