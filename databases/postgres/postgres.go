@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/thesaas-company/xray/config"
-	"github.com/thesaas-company/xray/types"
 	"os"
 	"strings"
+
+	"github.com/thesaas-company/xray/config"
+	"github.com/thesaas-company/xray/types"
 )
 
 // DB_PASSWORD is the environment variable that holds the database password.
@@ -115,8 +116,7 @@ func (p *Postgres) Schema(table string) (types.Table, error) {
 		return response, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
-	var tbl types.Table
-	tbl, err = types.Table{
+	tbl, err := types.Table{
 		Name:        table,
 		Columns:     columns,
 		ColumnCount: int64(len(columns)),
