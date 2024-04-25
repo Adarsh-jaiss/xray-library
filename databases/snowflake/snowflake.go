@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	sf "github.com/snowflakedb/gosnowflake"
 	"github.com/thesaas-company/xray/config"
@@ -15,9 +16,9 @@ type Snowflake struct {
 	Config *config.Config
 }
 
+var DB_PASSWORD string = "root"
+
 const (
-	SNOWFLAKE_PASSWORD = "root"
-	// SNOWFLAKE_SCHEMA_QUERY      = "DESCRIBE %s"
 	SNOWFLAKE_TABLES_LIST_QUERY = "SHOW TERSE TABLES"
 	SNOWFLAKE_SCHEMA_QUERY      = `
 	SELECT 
@@ -52,11 +53,18 @@ func NewSnowflake(dbClient *sql.DB) (types.ISQL, error) {
 	}, nil
 }
 
+// The NewSnowflakeWithConfig function is responsible for creating a new Snowflake object with an initialized database client and configuration.
 func NewSnowflakeWithConfig(config *config.Config) (types.ISQL, error) {
+	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 {
+		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
+	}
+	DB_PASSWORD = os.Getenv(DB_PASSWORD)
+	
+	
 	dsn, err := sf.DSN(&sf.Config{
 		Account:   config.Account,
 		User:      config.Username,
-		Password:  SNOWFLAKE_PASSWORD,
+		Password:  DB_PASSWORD,
 		Database:  config.DatabaseName,
 		Warehouse: config.Warehouse,
 	})
@@ -77,6 +85,7 @@ func NewSnowflakeWithConfig(config *config.Config) (types.ISQL, error) {
 
 }
 
+// The Schema function returns the schema of a table in Snowflake.
 func (s *Snowflake) Schema(table string) (types.Table, error) {
 	var res types.Table
 
@@ -132,6 +141,7 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 }
 
 // Every table in Snowflake lives "inside" a schema. Every schema lives "inside" a database. It's a hierarchical system.
+// The Tables function returns a list of tables in a Snowflake database.
 func (s *Snowflake) Tables(DatabaseName string) ([]string, error) {
 	query := fmt.Sprintf("USE WAREHOUSE %s", s.Config.Warehouse)
 	_, err := s.Client.Query(query)
@@ -162,6 +172,7 @@ func (s *Snowflake) Tables(DatabaseName string) ([]string, error) {
 	return tables, nil
 }
 
+// The Execute function executes a query on a Snowflake database and returns the result as a JSON byte slice.
 func (s *Snowflake) Execute(query string) ([]byte, error) {
 	rows, err := s.Client.Query(query)
 	if err != nil {
