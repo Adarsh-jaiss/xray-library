@@ -25,7 +25,6 @@ const (
 		DATA_TYPE, 
 		IS_NULLABLE, 
 		COLUMN_DEFAULT, 
-		CHARACTER_MAXIMUM_LENGTH, 
 		IS_UPDATABLE, 
 		IS_IDENTITY, 
 		IS_GENERATED, 
@@ -95,7 +94,6 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 			&column.Type,
 			&column.IsNullable,
 			&column.ColumnDefault,
-			&column.CharacterMaximumLength,
 			&column.IsUpdatable,
 			&column.IsIdentity,
 			&column.IsGenerated,
@@ -134,11 +132,16 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 }
 
 // Every table in Snowflake lives "inside" a schema. Every schema lives "inside" a database. It's a hierarchical system.
-func (s *Snowflake) Tables(SchemaName string) ([]string, error) {
+func (s *Snowflake) Tables(DatabaseName string) ([]string, error) {
 	query := fmt.Sprintf("USE WAREHOUSE %s", s.Config.Warehouse)
-	rows, err := s.Client.Query(query)
+	_, err := s.Client.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
+	}
+
+	rows,err := s.Client.Query(SNOWFLAKE_TABLES_LIST_QUERY)
+	if err != nil {
+		return nil, fmt.Errorf("error executing sql statement and querying tables list: %v", err)
 	}
 	defer rows.Close()
 
