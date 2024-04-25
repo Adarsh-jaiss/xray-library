@@ -36,7 +36,7 @@ func TestSchema(t *testing.T) {
 
 	m, err := NewPostgres(db)
 	if err != nil {
-		t.Errorf("error executing query: %s", err)
+		t.Errorf("error initialising postgres: %s", err)
 	}
 	response, err := m.Schema(table_name)
 	if err != nil {
