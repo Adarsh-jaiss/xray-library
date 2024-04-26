@@ -16,7 +16,7 @@ type Snowflake struct {
 	Config *config.Config
 }
 
-var DB_PASSWORD string = "root"
+var DB_PASSWORD string = "DB_PASSWORD"
 
 const (
 	SNOWFLAKE_TABLES_LIST_QUERY = "SHOW TERSE TABLES"
