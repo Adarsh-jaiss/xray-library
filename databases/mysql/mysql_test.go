@@ -32,7 +32,7 @@ func TestSchema(t *testing.T) {
 	// we then create a new instance of our MySQL object and test the function
 	m, err := NewMySQL(db)
 	if err != nil {
-		t.Errorf("error executing query: %s", err)
+		t.Errorf("error initialising mysql: %s", err)
 	}
 	response, err := m.Schema(tableName)
 	if err != nil {

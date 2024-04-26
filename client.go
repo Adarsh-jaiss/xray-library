@@ -7,6 +7,7 @@ import (
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/databases/mysql"
 	"github.com/thesaas-company/xray/databases/postgres"
+	"github.com/thesaas-company/xray/databases/snowflake"
 	"github.com/thesaas-company/xray/logger"
 	"github.com/thesaas-company/xray/types"
 )
@@ -23,6 +24,12 @@ func NewClientWithConfig(dbConfig *config.Config, dbType types.DbType) (types.IS
 		return logger.NewLogger(sqlClient), nil
 	case types.Postgres:
 		sqlClient, err := postgres.NewPostgresWithConfig(dbConfig)
+		if err != nil {
+			return nil, err
+		}
+		return logger.NewLogger(sqlClient), nil
+	case types.Snowflake:
+		sqlClient, err := snowflake.NewSnowflakeWithConfig(dbConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -45,6 +52,12 @@ func NewClient(dbClient *sql.DB, dbType types.DbType) (types.ISQL, error) {
 		return logger.NewLogger(sqlClient), nil
 	case types.Postgres:
 		sqlClient, err := postgres.NewPostgres(dbClient)
+		if err != nil {
+			return nil, err
+		}
+		return logger.NewLogger(sqlClient), nil
+	case types.Snowflake:
+		sqlClient, err := snowflake.NewSnowflake(dbClient)
 		if err != nil {
 			return nil, err
 		}
