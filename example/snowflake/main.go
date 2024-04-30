@@ -9,12 +9,14 @@ import (
 	"github.com/thesaas-company/xray/types"
 )
 
+// export DB Passowrd, Export root=DB_PASSWORD
 func main() {
 	config := &config.Config{
 		Account:  "account",
 		Username : "root",
 		DatabaseName: "employees",
 		Warehouse: "Datasherlock",
+		
 	}
 
 	client, err := xray.NewClientWithConfig(config, types.Snowflake)
