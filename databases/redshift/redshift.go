@@ -18,7 +18,8 @@ type Redshift struct {
 }
 
 const (
-	Redshift_List_Tables_query = "select * from pg_table_def where schemaname = '%s';"
+	Redshift_List_Tables_query = "SELECT *FROM svv_all_tables WHERE database_name = 'tickit_db' = '%s';"
+	Redshift_Schema_query      = "SHOW COLUMNS FROM TABLE %s.%s.%s;"
 )
 
 // NewRedshift creates a new Redshift instance.
@@ -45,7 +46,7 @@ func NewRedshiftWithConfig(cfg *config.Config) (types.ISQL, error) {
 	// Return a new Redshift instance
 	return &Redshift{
 		Client: client,
-	},nil
+	}, nil
 
 }
 
@@ -65,14 +66,45 @@ func (r *Redshift) RedshiftAPIService(config *config.Config, query string) (*red
 	return svc, input
 }
 
-
-
 // Schema returns the schema of a table in Redshift.
 // It takes a table name as input and returns a Table struct and an error.
 func (r *Redshift) Schema(table string) (types.Table, error) {
-	return types.Table{}, nil
-}
+	var redshiftConfig config.Config
+	query := fmt.Sprintf(Redshift_Schema_query, redshiftConfig.DatabaseName, redshiftConfig.Schema, table)
+	svc, input := r.RedshiftAPIService(&redshiftConfig, query)
+	result, err := svc.ExecuteStatement(input)
+	if err != nil {
+		return types.Table{}, fmt.Errorf("error executing statement: %v", err)
+	}
 
+	getStatementResultInput := &redshiftdataapiservice.GetStatementResultInput{
+		Id: result.Id,
+	}
+
+	getStatementResultOutput, err := svc.GetStatementResult(getStatementResultInput)
+	if err != nil {
+		return types.Table{}, fmt.Errorf("error getting statement result: %v", err)
+	}
+
+	var columns []types.Column
+	for _, record := range getStatementResultOutput.Records {
+		for _, field := range record {
+			if field.StringValue != nil {
+				columns = append(columns, types.Column{Name: *field.StringValue})	// Append the column name to the columns slice
+
+			}
+		}
+	}
+
+	return types.Table{
+		Name:        table,
+		Columns:     columns,
+		ColumnCount: int64(len(columns)),
+		Description: "",
+		Metatags:    nil,
+	}, nil
+
+}
 
 func (r *Redshift) Execute(query string) ([]byte, error) {
 	var config config.Config
@@ -102,9 +134,9 @@ func (r *Redshift) Execute(query string) ([]byte, error) {
 
 // Tables returns a list of tables in the specified schema.
 // It takes a schema name as input and returns a slice of strings and an error.
-func (r *Redshift) Tables(SchemaName string) ([]string, error) {
+func (r *Redshift) Tables(DatabaseName string) ([]string, error) {
 	var config config.Config
-	query := fmt.Sprintf(Redshift_List_Tables_query, SchemaName)
+	query := fmt.Sprintf(Redshift_List_Tables_query, DatabaseName)
 	svc, input := r.RedshiftAPIService(&config, query)
 
 	res, err := svc.ExecuteStatement(input)
@@ -132,5 +164,3 @@ func (r *Redshift) Tables(SchemaName string) ([]string, error) {
 	}
 	return tables, nil
 }
-
-
