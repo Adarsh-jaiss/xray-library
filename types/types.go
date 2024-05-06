@@ -68,11 +68,12 @@ const (
 	Postgres
     Snowflake 
     BigQuery
+    Redshift
 )
 
 // String returns the string representation of the DbType.
 func (w DbType) String() string {
-	return [...]string{"mysql", "postgres", "snowflake","bigquery"}[w-1]
+	return [...]string{"mysql", "postgres", "snowflake","bigquery","redshift"}[w-1]
 }
 
 // Index returns the integer representation of the DbType.

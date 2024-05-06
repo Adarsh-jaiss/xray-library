@@ -90,7 +90,7 @@ func (r *Redshift) Schema(table string) (types.Table, error) {
 	for _, record := range getStatementResultOutput.Records {
 		for _, field := range record {
 			if field.StringValue != nil {
-				columns = append(columns, types.Column{Name: *field.StringValue})	// Append the column name to the columns slice
+				columns = append(columns, types.Column{Name: *field.StringValue}) 
 
 			}
 		}
