@@ -15,6 +15,7 @@ import (
 
 type Redshift struct {
 	Client *redshift.Redshift
+	config *config.Config
 }
 
 const (
@@ -26,6 +27,7 @@ const (
 func NewRedshift(client *redshift.Redshift) (types.ISQL, error) {
 	return &Redshift{
 		Client: client,
+		config: &config.Config{},
 	}, nil
 }
 
@@ -46,20 +48,21 @@ func NewRedshiftWithConfig(cfg *config.Config) (types.ISQL, error) {
 	// Return a new Redshift instance
 	return &Redshift{
 		Client: client,
+		config: cfg,
 	}, nil
 
 }
 
 // Execute executes a query on Redshift.
 func (r *Redshift) RedshiftAPIService(config *config.Config, query string) (*redshiftdataapiservice.RedshiftDataAPIService, *redshiftdataapiservice.ExecuteStatementInput) {
-	config.AWS.SecretArn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:My	DBSecret-a1b2c3"
-	config.AWS.ClusterIdentifier = "my-cluster"
-	config.DatabaseName = "my-database"
+	// config.AWS.SecretArn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:My	DBSecret-a1b2c3"
+	// config.AWS.ClusterIdentifier = "my-cluster"
+	// config.DatabaseName = "my-database"
 	svc := redshiftdataapiservice.New(session.New())
 	input := &redshiftdataapiservice.ExecuteStatementInput{
-		ClusterIdentifier: aws.String(config.AWS.ClusterIdentifier),
-		Database:          aws.String(config.DatabaseName),
-		SecretArn:         aws.String(config.AWS.SecretArn),
+		ClusterIdentifier: aws.String(r.config.AWS.ClusterIdentifier),
+		Database:          aws.String(r.config.DatabaseName),
+		SecretArn:         aws.String(r.config.AWS.SecretArn),
 		Sql:               aws.String(query),
 	}
 
@@ -69,9 +72,8 @@ func (r *Redshift) RedshiftAPIService(config *config.Config, query string) (*red
 // Schema returns the schema of a table in Redshift.
 // It takes a table name as input and returns a Table struct and an error.
 func (r *Redshift) Schema(table string) (types.Table, error) {
-	var redshiftConfig config.Config
-	query := fmt.Sprintf(Redshift_Schema_query, redshiftConfig.DatabaseName, redshiftConfig.Schema, table)
-	svc, input := r.RedshiftAPIService(&redshiftConfig, query)
+	query := fmt.Sprintf(Redshift_Schema_query, r.config.DatabaseName, r.config.Schema, table)
+	svc, input := r.RedshiftAPIService(r.config, query)
 	result, err := svc.ExecuteStatement(input)
 	if err != nil {
 		return types.Table{}, fmt.Errorf("error executing statement: %v", err)
@@ -107,8 +109,7 @@ func (r *Redshift) Schema(table string) (types.Table, error) {
 }
 
 func (r *Redshift) Execute(query string) ([]byte, error) {
-	var config config.Config
-	svc, input := r.RedshiftAPIService(&config, query)
+	svc, input := r.RedshiftAPIService(r.config, query)
 	result, err := svc.ExecuteStatement(input)
 	if err != nil {
 		return nil, fmt.Errorf("error executing statement: %v", err)
@@ -135,9 +136,8 @@ func (r *Redshift) Execute(query string) ([]byte, error) {
 // Tables returns a list of tables in the specified schema.
 // It takes a schema name as input and returns a slice of strings and an error.
 func (r *Redshift) Tables(DatabaseName string) ([]string, error) {
-	var config config.Config
 	query := fmt.Sprintf(Redshift_List_Tables_query, DatabaseName)
-	svc, input := r.RedshiftAPIService(&config, query)
+	svc, input := r.RedshiftAPIService(r.config, query)
 
 	res, err := svc.ExecuteStatement(input)
 	if err != nil {

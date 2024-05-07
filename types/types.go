@@ -2,6 +2,7 @@ package types
 
 import (
 	"database/sql"
+    "go.mongodb.org/mongo-driver/bson"
 )
 
 // ISQL is an interface that defines the methods that a SQL database must implement.
@@ -18,6 +19,7 @@ type Table struct {
 	ColumnCount int64    `json:"column_count"` // ColumnCount is the number of columns in the table.
 	Description string   `json:"description"`  // Description is a description of the table.
 	Metatags    []string `json:"metatags"`     // Metatags contains all column names.
+    BSON        bson.M   `json:"bson"`         // BSON contains the raw BSON data. for nosql DB's
 }
 
 // Column represents a column in a database table.
