@@ -46,19 +46,19 @@ func NewMongoDBWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 }
 
 // Schema returns the schema of a collection in mongoDB.
-func (m *MongoDB) Schema( Collection string) (types.Table, error) {
-	
+func (m *MongoDB) Schema(Collection string) (types.Table, error) {
+
 	var schema bson.M
 	ctx := context.Background()
 	err := m.Client.Database(m.config.DatabaseName).Collection(Collection).FindOne(ctx, bson.M{}).Decode(&schema)
 	if err != nil {
 		return types.Table{}, err
 	}
-	
+
 	return types.Table{
 		BSON: schema,
-	},nil
-	
+	}, nil
+
 }
 
 // Tables returns the tables(collections) in a database in mongoDB.
