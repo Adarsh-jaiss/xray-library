@@ -1,36 +1,34 @@
-package main
+package bigquery
 
 import (
 	"fmt"
 
-	_ "github.com/snowflakedb/gosnowflake"
 	"github.com/thesaas-company/xray"
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
 )
 
-// export DB Passowrd, Export root=DB_PASSWORD
 func main() {
 	config := &config.Config{
-		Account:  "account",
-		Username : "root",
-		DatabaseName: "employees",
-		Warehouse: "Datasherlock",	
+		ProjectID:   "project-id",
+		JSONKeyPath: "path/to/key.json",
 	}
 
-	client, err := xray.NewClientWithConfig(config, types.Snowflake)
+	client, err := xray.NewClientWithConfig(config, types.BigQuery)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println("Connected to database")
-	data, err := client.Tables(config.DatabaseName)
+
+	tables, err := client.Tables("dataset")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Tables :", data)
+
+	fmt.Println("Tables :", tables)
 
 	var response []types.Table
-	for _, v := range data {
+	for _, v := range tables {
 		table, err := client.Schema(v)
 		if err != nil {
 			panic(err)
