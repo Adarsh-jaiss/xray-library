@@ -12,10 +12,12 @@ import (
 // export DB Passowrd, Export root=DB_PASSWORD
 func main() {
 	config := &config.Config{
-		Account:  "account",
-		Username : "root",
-		DatabaseName: "employees",
-		Warehouse: "Datasherlock",	
+		Account:      "account",
+		Username:     "Username",
+		DatabaseName: "DatabaseName",
+		Port:         "443",
+		Warehouse:    "Wareshousw_name",
+		Schema:       "Schema", // optional
 	}
 
 	client, err := xray.NewClientWithConfig(config, types.Snowflake)
