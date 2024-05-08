@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
 	sf "github.com/snowflakedb/gosnowflake"
 	"github.com/thesaas-company/xray/config"
@@ -37,19 +38,23 @@ func NewSnowflakeWithConfig(config *config.Config) (types.ISQL, error) {
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
 	}
 	DB_PASSWORD = os.Getenv(DB_PASSWORD)
-	
-	
+
+	port, _ := strconv.Atoi(config.Port)
+
 	dsn, err := sf.DSN(&sf.Config{
-		Account:   config.Account,
-		User:      config.Username,
-		Password:  DB_PASSWORD,
-		Database:  config.DatabaseName,
-		Warehouse: config.Warehouse,
+		Account:      config.Account,
+		User:         config.Username,
+		Password:     DB_PASSWORD,
+		Port:         port,
+		Database:     config.DatabaseName,
+		Warehouse:    config.Warehouse,
+		Schema:       config.Schema,
+		InsecureMode: true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating snowflake DSN: %v", err)
 	}
-
+	fmt.Println(dsn)
 	dbType := types.Snowflake
 	db, err := sql.Open(dbType.String(), dsn)
 	if err != nil {
@@ -104,12 +109,13 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 // The Tables function returns a list of tables in a Snowflake database.
 func (s *Snowflake) Tables(DatabaseName string) ([]string, error) {
 	query := fmt.Sprintf("USE WAREHOUSE %s", s.Config.Warehouse)
+
 	_, err := s.Client.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
 
-	rows,err := s.Client.Query(SNOWFLAKE_TABLES_LIST_QUERY)
+	rows, err := s.Client.Query(SNOWFLAKE_TABLES_LIST_QUERY)
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement and querying tables list: %v", err)
 	}
