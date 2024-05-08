@@ -27,8 +27,8 @@ func TestSchema(t *testing.T) {
 
 	table_name := "user"
 
-	columns := []string{"name", "type", "IsNullable", "DefaultValue", "IsUpdatable", "IsIdenity", "IsGenerated", "IsUnique", "IsSystemColumn", "IsHidden", "IsReadOnly", "IsComputed", "IsSparse", "IsColumnSet", "IsSelfReplacing", "ScopeName", "ScopeSchema", "OrdinalPosition"}
-	mockRows := sqlmock.NewRows(columns).AddRow("id", "int", true, 1, true, false, true, true, false, false, true, false, true, false, true, "scope1", "schema1", 1)
+	columns := []string{"name", "type"}
+	mockRows := sqlmock.NewRows(columns).AddRow("id", "int").AddRow("name", "varchar")
 
 	mock.ExpectQuery(regexp.QuoteMeta(SNOWFLAKE_SCHEMA_QUERY)).WithArgs(table_name).WillReturnRows(mockRows)
 

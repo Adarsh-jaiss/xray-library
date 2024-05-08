@@ -20,29 +20,7 @@ var DB_PASSWORD string = "DB_PASSWORD"
 
 const (
 	SNOWFLAKE_TABLES_LIST_QUERY = "SHOW TERSE TABLES"
-	SNOWFLAKE_SCHEMA_QUERY      = `
-	SELECT 
-		COLUMN_NAME, 
-		DATA_TYPE, 
-		IS_NULLABLE, 
-		COLUMN_DEFAULT, 
-		IS_UPDATABLE, 
-		IS_IDENTITY, 
-		IS_GENERATED, 
-		IS_UNIQUE, 
-		IS_SYSTEM_COLUMN, 
-		IS_HIDDEN, 
-		IS_READ_ONLY, 
-		IS_COMPUTED, 
-		IS_SPARSE, 
-		IS_COLUMN_SET, 
-		IS_SELF_REFERENCING, 
-		SCOPE_NAME, 
-		SCOPE_SCHEMA, 
-		ORDINAL_POSITION 
-	FROM INFORMATION_SCHEMA.COLUMNS 
-	WHERE TABLE_NAME = ?)
-	`
+	SNOWFLAKE_SCHEMA_QUERY = "SELECT column_name::TEXT, data_type::TEXT FROM information_schema.columns WHERE table_name::TEXT = ?;"
 )
 
 // The NewSnowflake function is responsible for creating a new Snowflake object with an initialized database client and configuration.
@@ -98,25 +76,7 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 	var columns []types.Column
 	for rows.Next() {
 		var column types.Column
-		if err := rows.Scan(
-			&column.Name,
-			&column.Type,
-			&column.IsNullable,
-			&column.ColumnDefault,
-			&column.IsUpdatable,
-			&column.IsIdentity,
-			&column.IsGenerated,
-			&column.IsUnique,
-			&column.IsSystemColumn,
-			&column.IsHidden,
-			&column.IsReadOnly,
-			&column.IsComputed,
-			&column.IsSparse,
-			&column.IsColumnSet,
-			&column.IsSelfReferencing,
-			&column.ScopeName,
-			&column.ScopeSchema,
-			&column.OrdinalPosition); err != nil {
+		if err := rows.Scan(&column.Name,&column.Type); err != nil {
 			return res, fmt.Errorf("error scanning rows: %v", err)
 		}
 		column.Description = ""      // default description
@@ -157,10 +117,11 @@ func (s *Snowflake) Tables(DatabaseName string) ([]string, error) {
 
 	var tables []string
 	for rows.Next() {
-		var table string
-		if err := rows.Scan(&table); err != nil {
+		var col1, col2, col3, col4, col5 string
+		if err := rows.Scan(&col1, &col2, &col3, &col4, &col5); err != nil {
 			return nil, fmt.Errorf("error scanning database: %v", err)
 		}
+		table := col2
 		tables = append(tables, table)
 	}
 
