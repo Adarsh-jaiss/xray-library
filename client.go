@@ -6,6 +6,7 @@ import (
 
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/databases/bigquery"
+	
 	"github.com/thesaas-company/xray/databases/mysql"
 	"github.com/thesaas-company/xray/databases/postgres"
 	"github.com/thesaas-company/xray/databases/redshift"
@@ -48,6 +49,7 @@ func NewClientWithConfig(dbConfig *config.Config, dbType types.DbType) (types.IS
 			return nil, err
 		}
 		return logger.NewLogger(redshiftClient), nil
+	
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", dbType)
 	}

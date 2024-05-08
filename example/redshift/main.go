@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	// Initialize the configuration
+	// Define the configuration for the Redshift instance
 	cfg := &config.Config{
 		AWS: config.AWS{
 			Region:          "us-west-2",
@@ -20,7 +20,7 @@ func main() {
 		Schema:       "my-schema",
 	}
 
-	// Create a new Redshift instance with the provided configuration
+	// Create a new Redshift instance
 	rs, err := redshift.NewRedshiftWithConfig(cfg)
 	if err != nil {
 		fmt.Printf("Error creating Redshift instance: %v\n", err)
@@ -33,10 +33,8 @@ func main() {
 		fmt.Printf("Error executing query: %v\n", err)
 		return
 	}
-
 	fmt.Printf("Query result: %s\n", string(result))
 
-	// Get a list of tables in the database
 	tables, err := rs.Tables(cfg.DatabaseName)
 	if err != nil {
 		fmt.Printf("Error getting tables: %v\n", err)

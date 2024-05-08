@@ -69,6 +69,7 @@ const (
     Snowflake 
     BigQuery
     Redshift
+   
 )
 
 // String returns the string representation of the DbType.
