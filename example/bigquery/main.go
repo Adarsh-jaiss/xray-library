@@ -1,4 +1,4 @@
-package bigquery
+package main
 
 import (
 	"fmt"
@@ -10,8 +10,9 @@ import (
 
 func main() {
 	config := &config.Config{
-		ProjectID:   "project-id",
-		JSONKeyPath: "path/to/key.json",
+		ProjectID:    "ProjectID",
+		JSONKeyPath:  "JSONKeyPath",
+		DatabaseName: "Database_Name",
 	}
 
 	client, err := xray.NewClientWithConfig(config, types.BigQuery)
@@ -20,7 +21,7 @@ func main() {
 	}
 	fmt.Println("Connected to database")
 
-	tables, err := client.Tables("dataset")
+	tables, err := client.Tables(config.DatabaseName)
 	if err != nil {
 		panic(err)
 	}
@@ -36,4 +37,4 @@ func main() {
 		response = append(response, table)
 	}
 	fmt.Println(response)
-}
+} 
