@@ -132,3 +132,48 @@ func TestTables(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
+
+func TestGenerateCreateTableQuery(t *testing.T) {
+	db, mock := MockDB()
+	defer db.Close()
+
+	table := types.Table{
+		Name: "user",
+		Columns: []types.Column{
+			{
+				Name:          "id",
+				Type:          "int",
+				AutoIncrement: true,
+				IsNullable:    "NO",
+				DefaultValue:  sql.NullString{String: "", Valid: false},
+				IsPrimary:     true,
+				IsUnique:      sql.NullString{String: "YES", Valid: true},
+			},
+			{
+				Name:         "name",
+				Type:         "varchar(255)",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    false,
+				IsUnique:     sql.NullString{String: "NO", Valid: true},
+			},
+			{
+				Name:       "age",
+				Type:       "int",
+				IsNullable: "YES",
+			},
+		},
+	}
+
+	s := &Snowflake{}
+	query := s.GenerateCreateTableQuery(table)
+
+	expectedQuery := "CREATE TABLE user (id INT AUTOINCREMENT PRIMARY KEY UNIQUE, name VARCHAR(255) NOT NULL, age INT);"
+	if query != expectedQuery {
+		t.Errorf("Expected '%s', but got '%s'", expectedQuery, query)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}

@@ -9,11 +9,13 @@ type ISQL interface {
 	Schema(string) (Table, error)
 	Execute(string) ([]byte, error)
 	Tables(string) ([]string, error)
+	GenerateCreateTableQuery(Table) string
 }
 
 // Table represents a database table.
 type Table struct {
 	Name        string   `json:"name"`         // Name is the name of the table.
+	Dataset     string   `json:"dataset"`      // Dataset is the dataset of the bigquery table.
 	Columns     []Column `json:"columns"`      // Columns are the columns in the table.
 	ColumnCount int64    `json:"column_count"` // ColumnCount is the number of columns in the table.
 	Description string   `json:"description"`  // Description is a description of the table.
@@ -24,6 +26,7 @@ type Table struct {
 type Column struct {
 	Name                   string         `json:"name"`                     // Name is the name of the column.
 	Type                   string         `json:"type"`                     // Type is the data type of the column.
+	AutoIncrement          bool           `json:"auto_increment"`           // AutoIncrement indicates whether the column is auto-incrementing.
 	IsNullable             string         `json:"is_nullable"`              // IsNullable indicates whether the column can have null values.
 	Key                    string         `json:"key"`                      // Key is the key type of the column.
 	DefaultValue           sql.NullString `json:"default_value"`            // DefaultValue is the default value of the column.

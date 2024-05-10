@@ -1,6 +1,7 @@
 package bigquery
 
 import (
+	"database/sql"
 	"fmt"
 	"testing"
 
@@ -30,6 +31,11 @@ func (m *MockBigQuery) Execute(query string) ([]byte, error) {
 func (m *MockBigQuery) Tables(dataset string) ([]string, error) {
 	args := m.Called(dataset)
 	return args.Get(0).([]string), args.Error(1)
+}
+
+func (m *MockBigQuery) GenerateCreateTableQuery(table types.Table) string {
+	args := m.Called(table)
+	return args.Get(0).(string)
 }
 
 // TestBigQuery_Schema is a unit test function that tests the Schema method of the BigQuery struct.
@@ -112,4 +118,48 @@ func TestBigQuery_Tables(t *testing.T) {
 	// Assert that the method was called with the correct arguments
 	mockBigQuery.AssertCalled(t, "Tables", "dataset")
 	fmt.Println(expectedTables, actualTables)
+}
+
+func TestGenerateCreateTableQuery(t *testing.T) {
+	table := types.Table{
+		Name:    "user",
+		Dataset: "Datasherlocks",
+		Columns: []types.Column{
+			{
+				Name:         "id",
+				Type:         "int",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    true,
+				IsUnique:     sql.NullString{String: "YES", Valid: true},
+			},
+			{
+				Name:         "name",
+				Type:         "VARCHAR(255)",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    false,
+				IsUnique:     sql.NullString{String: "YES", Valid: true},
+			},
+			{
+				Name:       "age",
+				Type:       "INT",
+				IsNullable: "YES",
+			},
+		},
+	}
+
+	// Create a new instance of the mock
+	mockBigQuery := new(MockBigQuery)
+
+	// Set the expected return values
+	expectedQuery := "CREATE TABLE Datasherlocks.user (id int PRIMARY KEY, name VARCHAR(255) UNIQUE, age INT);"
+
+	mockBigQuery.On("GenerateCreateTableQuery", table).Return(expectedQuery)
+
+	// Call the method under test
+	query := mockBigQuery.GenerateCreateTableQuery(table)
+
+	// Assert the expected return values
+	assert.Equal(t, expectedQuery, query)
 }

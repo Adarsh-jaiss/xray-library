@@ -1,6 +1,7 @@
 package redshift
 
 import (
+	"database/sql"
 	"errors"
 	"testing"
 
@@ -30,6 +31,11 @@ func (m *MockRedshift) Execute(query string) ([]byte, error) {
 func (m *MockRedshift) Tables(database string) ([]string, error) {
 	args := m.Called(database)
 	return args.Get(0).([]string), args.Error(1)
+}
+
+func (m *MockRedshift) GenerateCreateTableQuery(table types.Table) string {
+	args := m.Called(table)
+	return args.Get(0).(string)
 }
 
 // Redshidft schema
@@ -84,6 +90,49 @@ func TestRedshift_Tables(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedTables, actualTables)
+}
+
+func TestGenerateCreateTableQuery(t *testing.T) {
+	table := types.Table{
+		Name: "user",
+		Columns: []types.Column{
+			{
+				Name:          "id",
+				Type:          "int",
+				AutoIncrement: true,
+				IsNullable:    "NO",
+				DefaultValue:  sql.NullString{String: "", Valid: false},
+				IsPrimary:     true,
+				IsUnique:      sql.NullString{String: "YES", Valid: true},
+			},
+			{
+				Name:         "name",
+				Type:         "varchar(255)",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    false,
+				IsUnique:     sql.NullString{String: "NO", Valid: true},
+			},
+			{
+				Name:       "age",
+				Type:       "int",
+				IsNullable: "YES",
+			},
+		},
+	}
+
+	// Define the expected query
+	expectedQuery := "CREATE TABLE amazon.customer.user (id INT PRIMARY KEY IDENTITY(1,1) UNIQUE NOT NULL, name VARCHAR(255) NOT NULL, age INT);"
+
+	// Create a mock Redshift instance
+	mockRedshift := new(MockRedshift)
+	mockRedshift.On("GenerateCreateTableQuery", table).Return(expectedQuery)
+
+	// Generate the create table query
+	actualQuery := mockRedshift.GenerateCreateTableQuery(table)
+
+	// Compare the generated query with the expected query
+	assert.Equal(t, expectedQuery, actualQuery)
 }
 
 func TestRedshift_Schema_Error(t *testing.T) {

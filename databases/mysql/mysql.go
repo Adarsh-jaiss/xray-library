@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/thesaas-company/xray/config"
@@ -171,6 +172,35 @@ func (m *MySQL) Tables(databaseName string) ([]string, error) {
 	}
 
 	return tables, nil
+}
+
+// GenerateCreateTableQuery generates a SQL query to create a table with the same structure as the input table.
+func (m *MySQL) GenerateCreateTableQuery(table types.Table) string {
+	query := "CREATE TABLE " + table.Name + " ("
+	for i, column := range table.Columns {
+		colType := strings.ToUpper(column.Type)
+		query += column.Name + " " + colType
+		if column.AutoIncrement {
+			query += " AUTO_INCREMENT"
+		}
+		if column.IsPrimary {
+			query += " PRIMARY KEY"
+		}
+		if column.DefaultValue.Valid {
+			query += " DEFAULT " + column.DefaultValue.String
+		}
+		if column.IsUnique.String == "YES" {
+			query += " UNIQUE"
+		}
+		if column.IsNullable == "NO" {
+			query += " NOT NULL"
+		}
+		if i < len(table.Columns)-1 {
+			query += ", "
+		}
+	}
+	query += ")"
+	return query
 }
 
 // Create a new MySQL connection URL with the given configuration.

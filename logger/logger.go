@@ -88,3 +88,16 @@ func (l *Logger) Tables(databaseName string) ([]string, error) {
 
 	return result, err
 }
+
+func (l *Logger) GenerateCreateTableQuery(table types.Table) string {
+	defer func(start time.Time) {
+		// Log the execution time
+		logrus.WithFields(logrus.Fields{
+			"table_name":           table.Name,
+			"Query_Execution_time": time.Since(start),
+		}).Info("Create table query generation completed")
+	}(time.Now())
+
+	result := l.logs.GenerateCreateTableQuery(table)
+	return result
+}

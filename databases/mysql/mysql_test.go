@@ -119,3 +119,50 @@ func TestGetTableName(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
+
+func TestGenerateCreateTablequery(t *testing.T) {
+	db, mock := MockDB()
+	defer db.Close()
+
+	table := types.Table{
+		Name: "user",
+		Columns: []types.Column{
+			{
+				Name:         "id",
+				Type:         "int",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    true,
+				IsUnique:     sql.NullString{String: "YES", Valid: true},
+			},
+			{
+				Name:         "name",
+				Type:         "varchar(255)",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    false,
+				IsUnique:     sql.NullString{String: "NO", Valid: true},
+			},
+			{
+				Name:       "age",
+				Type:       "int",
+				IsNullable: "YES",
+			},
+		},
+	}
+
+	m := &MySQL{Client: db}
+	query := m.GenerateCreateTableQuery(table)
+
+	fmt.Printf("Create table query: %s\n", query)
+
+	expectedQuery := "CREATE TABLE user (id INT PRIMARY KEY UNIQUE NOT NULL, name VARCHAR(255) NOT NULL, age INT)"
+    if query != expectedQuery {
+        t.Errorf("Expected '%s', but got '%s'", expectedQuery, query)
+    }
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+}
