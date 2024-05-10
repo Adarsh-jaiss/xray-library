@@ -55,20 +55,19 @@ func NewRedshiftWithConfig(cfg *config.Config) (types.ISQL, error) {
 
 }
 
-// Execute executes a query on Redshift.
 func (r *Redshift) RedshiftAPIService(config *config.Config, query string) (*redshiftdataapiservice.RedshiftDataAPIService, *redshiftdataapiservice.ExecuteStatementInput) {
-	// config.AWS.SecretArn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:My	DBSecret-a1b2c3"
-	// config.AWS.ClusterIdentifier = "my-cluster"
-	// config.DatabaseName = "my-database"
-	svc := redshiftdataapiservice.New(session.New())
-	input := &redshiftdataapiservice.ExecuteStatementInput{
-		ClusterIdentifier: aws.String(r.config.AWS.ClusterIdentifier),
-		Database:          aws.String(r.config.DatabaseName),
-		SecretArn:         aws.String(r.config.AWS.SecretArn),
-		Sql:               aws.String(query),
-	}
+    // config.AWS.SecretArn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:My	DBSecret-a1b2c3"
+    // config.AWS.ClusterIdentifier = "my-cluster"
+    // config.DatabaseName = "my-database"
+    svc := redshiftdataapiservice.New(session.Must(session.NewSession(&aws.Config{})))
+    input := &redshiftdataapiservice.ExecuteStatementInput{
+        ClusterIdentifier: aws.String(r.config.AWS.ClusterIdentifier),
+        Database:          aws.String(r.config.DatabaseName),
+        SecretArn:         aws.String(r.config.AWS.SecretArn),
+        Sql:               aws.String(query),
+    }
 
-	return svc, input
+    return svc, input
 }
 
 // Schema returns the schema of a table in Redshift.
