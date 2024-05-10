@@ -120,6 +120,11 @@ docker run -d --name postgres \
   postgres:13.2-alpine
 ```
 
+- Set Password in env variable
+```bash
+export DB_PASSWORD=root
+```
+
 - To inspect and execute queries in Postgres database, Create a main.go file and adding the below example into it.
 
 ```
@@ -178,6 +183,10 @@ go run main.go
 
 - To inspect and execute queries in snowflake database, Create a main.go file and adding the below example into it.
 
+ - Set Password in env variable
+```bash
+export DB_PASSWORD=<DB_PASSWORD>
+```
 
 ```
 package main
