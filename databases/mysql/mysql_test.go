@@ -156,7 +156,7 @@ func TestGenerateCreateTablequery(t *testing.T) {
 
 	fmt.Printf("Create table query: %s\n", query)
 
-	expectedQuery := "CREATE TABLE user (id INT PRIMARY KEY UNIQUE NOT NULL, name VARCHAR(255) NOT NULL, age INT)"
+	expectedQuery := "CREATE TABLE user (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT)"
     if query != expectedQuery {
         t.Errorf("Expected '%s', but got '%s'", expectedQuery, query)
     }

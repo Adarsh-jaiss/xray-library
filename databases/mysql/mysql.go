@@ -189,10 +189,10 @@ func (m *MySQL) GenerateCreateTableQuery(table types.Table) string {
 		if column.DefaultValue.Valid {
 			query += " DEFAULT " + column.DefaultValue.String
 		}
-		if column.IsUnique.String == "YES" {
+		if column.IsUnique.String == "YES" && !column.IsPrimary {
 			query += " UNIQUE"
 		}
-		if column.IsNullable == "NO" {
+		if column.IsNullable == "NO" && !column.IsPrimary {
 			query += " NOT NULL"
 		}
 		if i < len(table.Columns)-1 {

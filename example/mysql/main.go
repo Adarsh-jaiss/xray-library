@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/thesaas-company/xray"
@@ -8,6 +9,7 @@ import (
 	"github.com/thesaas-company/xray/types"
 )
 
+// export DB_PASSWORD=your_password
 func main() {
 	config := &config.Config{
 		Host:         "127.0.0.1",
@@ -33,4 +35,34 @@ func main() {
 		response = append(response, table)
 	}
 	fmt.Println(response)
+
+	table := types.Table{
+		Name: "user",
+		Columns: []types.Column{
+			{
+				Name:         "id",
+				Type:         "int",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    true,
+				IsUnique:     sql.NullString{String: "YES", Valid: true},
+			},
+			{
+				Name:         "name",
+				Type:         "varchar(255)",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    false,
+				IsUnique:     sql.NullString{String: "NO", Valid: true},
+			},
+			{
+				Name:       "age",
+				Type:       "int",
+				IsNullable: "YES",
+			},
+		},
+	}
+
+	query := client.GenerateCreateTableQuery(table)
+	fmt.Println(query)
 }
