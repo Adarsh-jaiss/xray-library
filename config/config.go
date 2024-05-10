@@ -56,6 +56,6 @@ type AWS struct {
 	// ClusterIdentifier is the AWS cluster identifier.
 	ClusterIdentifier string `yaml:"cluster_identifier" pflag:",AWS cluster identifier"`
 
-    // SecretArn is the AWS secret ARN.
-    SecretArn string `yaml:"secret_arn" pflag:",AWS secret ARN"`
+	// SecretArn is the AWS secret ARN.
+	SecretArn string `yaml:"secret_arn" pflag:",AWS secret ARN"`
 }

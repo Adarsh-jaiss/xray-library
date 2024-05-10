@@ -147,9 +147,11 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 	// Scan the result into a slice of slices
 	var results [][]interface{}
 	for rows.Next() {
+		// create a slice of values and pointers
 		values := make([]interface{}, len(columns))
 		pointers := make([]interface{}, len(columns))
 		for i := range values {
+			//  create a slice of pointers to the values
 			pointers[i] = &values[i]
 		}
 
@@ -201,7 +203,6 @@ func (p *Postgres) Tables(databaseName string) ([]string, error) {
 	}
 
 	return tables, nil
-
 }
 
 // TableToString returns a string representation of a table.

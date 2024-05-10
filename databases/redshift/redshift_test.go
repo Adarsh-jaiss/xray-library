@@ -9,26 +9,30 @@ import (
 	"github.com/thesaas-company/xray/types"
 )
 
-
+// MockRedshift is a mock implementation of the Redshift interface.
 type MockRedshift struct {
 	mock.Mock
 }
 
+// Schema mocks the Schema method.
 func (m *MockRedshift) Schema(table string) (types.Table, error) {
 	args := m.Called(table)
 	return args.Get(0).(types.Table), args.Error(1)
 }
 
+// Execute mocks the Execute method.
 func (m *MockRedshift) Execute(query string) ([]byte, error) {
 	args := m.Called(query)
 	return args.Get(0).([]byte), args.Error(1)
 }
 
+// Tables mocks the Tables method.
 func (m *MockRedshift) Tables(database string) ([]string, error) {
 	args := m.Called(database)
 	return args.Get(0).([]string), args.Error(1)
 }
 
+// Redshidft schema
 func TestRedshift_Schema(t *testing.T) {
 	mockRedshift := new(MockRedshift)
 
@@ -54,6 +58,9 @@ func TestRedshift_Schema(t *testing.T) {
 	assert.Equal(t, expectedSchema, actualSchema)
 }
 
+// Redhshift schema is a unit test function that tests the Schema method of the Redhsift struct.
+// It creates a mock instance of Redshift, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestRedshift_Execute(t *testing.T) {
 	mockRedshift := new(MockRedshift)
 
@@ -66,6 +73,7 @@ func TestRedshift_Execute(t *testing.T) {
 	assert.Equal(t, expectedResult, actualResult)
 }
 
+// Redshift schema is a unit test function that tests the Tables method of the Redshift struct.
 func TestRedshift_Tables(t *testing.T) {
 	mockRedshift := new(MockRedshift)
 

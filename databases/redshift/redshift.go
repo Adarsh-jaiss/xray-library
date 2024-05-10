@@ -13,11 +13,13 @@ import (
 	"github.com/thesaas-company/xray/types"
 )
 
+// Redshift is a struct that represents a Redshift database.
 type Redshift struct {
 	Client *redshift.Redshift
 	config *config.Config
 }
 
+// Redshift_List_Tables_query is the SQL query used to list all tables in a schema in Redshift.
 const (
 	Redshift_List_Tables_query = "SELECT *FROM svv_all_tables WHERE database_name = 'tickit_db' = '%s';"
 	Redshift_Schema_query      = "SHOW COLUMNS FROM TABLE %s.%s.%s;"
@@ -92,7 +94,7 @@ func (r *Redshift) Schema(table string) (types.Table, error) {
 	for _, record := range getStatementResultOutput.Records {
 		for _, field := range record {
 			if field.StringValue != nil {
-				columns = append(columns, types.Column{Name: *field.StringValue}) 
+				columns = append(columns, types.Column{Name: *field.StringValue})
 
 			}
 		}
@@ -108,13 +110,16 @@ func (r *Redshift) Schema(table string) (types.Table, error) {
 
 }
 
+// Execute executes a query on Redshift.
+// It takes a query string as input and returns the result as a JSON byte slice and an error.
 func (r *Redshift) Execute(query string) ([]byte, error) {
-	svc, input := r.RedshiftAPIService(r.config, query)
-	result, err := svc.ExecuteStatement(input)
+	svc, input := r.RedshiftAPIService(r.config, query) // create a new Redshift API service
+	result, err := svc.ExecuteStatement(input)          // execute the statement
 	if err != nil {
 		return nil, fmt.Errorf("error executing statement: %v", err)
 	}
 
+	// Get the result
 	getStatementResultInput := &redshiftdataapiservice.GetStatementResultInput{
 		Id: result.Id,
 	}
