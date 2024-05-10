@@ -327,3 +327,4 @@ go run main.go
 
 ## Maintainer
 - [@Adarsh Jaiswal](https://github.com/adarsh-jaiss)
+- [@tqindia](https://github.com/tqindia)
