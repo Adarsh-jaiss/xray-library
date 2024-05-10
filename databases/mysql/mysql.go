@@ -16,7 +16,7 @@ import (
 var DB_PASSWORD = "DB_PASSWORD"
 
 const (
-	SCHEMA_QUERY            = "DESCRIBE %s"                                                              // SCHEMA_QUERY is the SQL query used to describe a table schema.
+	SCHEMA_QUERY            = "DESCRIBE %s"                                                             // SCHEMA_QUERY is the SQL query used to describe a table schema.
 	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = ?" // MYSQL_TABLES_LIST_QUERY is the SQL query used to list all tables in a schema.
 )
 
@@ -173,6 +173,7 @@ func (m *MySQL) Tables(databaseName string) ([]string, error) {
 	return tables, nil
 }
 
+// Create a new MySQL connection URL with the given configuration.
 func dbURLMySQL(dbConfig *config.Config) string {
 	return fmt.Sprintf(
 		"%s:%s@tcp(%s)/%s?tls=%v&interpolateParams=true",

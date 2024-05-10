@@ -13,11 +13,13 @@ import (
 	"github.com/thesaas-company/xray/types"
 )
 
+// Redshift is a struct that represents a Redshift database.
 type Redshift struct {
 	Client *redshift.Redshift
 	config *config.Config
 }
 
+// Redshift_List_Tables_query is the SQL query used to list all tables in a schema in Redshift.
 const (
 	Redshift_List_Tables_query = "SELECT *FROM svv_all_tables WHERE database_name = 'tickit_db' = '%s';"
 	Redshift_Schema_query      = "SHOW COLUMNS FROM TABLE %s.%s.%s;"
@@ -53,20 +55,19 @@ func NewRedshiftWithConfig(cfg *config.Config) (types.ISQL, error) {
 
 }
 
-// Execute executes a query on Redshift.
 func (r *Redshift) RedshiftAPIService(config *config.Config, query string) (*redshiftdataapiservice.RedshiftDataAPIService, *redshiftdataapiservice.ExecuteStatementInput) {
-	// config.AWS.SecretArn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:My	DBSecret-a1b2c3"
-	// config.AWS.ClusterIdentifier = "my-cluster"
-	// config.DatabaseName = "my-database"
-	svc := redshiftdataapiservice.New(session.New())
-	input := &redshiftdataapiservice.ExecuteStatementInput{
-		ClusterIdentifier: aws.String(r.config.AWS.ClusterIdentifier),
-		Database:          aws.String(r.config.DatabaseName),
-		SecretArn:         aws.String(r.config.AWS.SecretArn),
-		Sql:               aws.String(query),
-	}
+    // config.AWS.SecretArn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:My	DBSecret-a1b2c3"
+    // config.AWS.ClusterIdentifier = "my-cluster"
+    // config.DatabaseName = "my-database"
+    svc := redshiftdataapiservice.New(session.Must(session.NewSession(&aws.Config{})))
+    input := &redshiftdataapiservice.ExecuteStatementInput{
+        ClusterIdentifier: aws.String(r.config.AWS.ClusterIdentifier),
+        Database:          aws.String(r.config.DatabaseName),
+        SecretArn:         aws.String(r.config.AWS.SecretArn),
+        Sql:               aws.String(query),
+    }
 
-	return svc, input
+    return svc, input
 }
 
 // Schema returns the schema of a table in Redshift.
@@ -92,7 +93,7 @@ func (r *Redshift) Schema(table string) (types.Table, error) {
 	for _, record := range getStatementResultOutput.Records {
 		for _, field := range record {
 			if field.StringValue != nil {
-				columns = append(columns, types.Column{Name: *field.StringValue}) 
+				columns = append(columns, types.Column{Name: *field.StringValue})
 
 			}
 		}
@@ -108,13 +109,16 @@ func (r *Redshift) Schema(table string) (types.Table, error) {
 
 }
 
+// Execute executes a query on Redshift.
+// It takes a query string as input and returns the result as a JSON byte slice and an error.
 func (r *Redshift) Execute(query string) ([]byte, error) {
-	svc, input := r.RedshiftAPIService(r.config, query)
-	result, err := svc.ExecuteStatement(input)
+	svc, input := r.RedshiftAPIService(r.config, query) // create a new Redshift API service
+	result, err := svc.ExecuteStatement(input)          // execute the statement
 	if err != nil {
 		return nil, fmt.Errorf("error executing statement: %v", err)
 	}
 
+	// Get the result
 	getStatementResultInput := &redshiftdataapiservice.GetStatementResultInput{
 		Id: result.Id,
 	}

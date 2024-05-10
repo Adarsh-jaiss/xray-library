@@ -14,6 +14,7 @@ import (
 	"github.com/thesaas-company/xray/types"
 )
 
+// setting up a mock db connection
 func MockDB() (*sql.DB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -23,22 +24,28 @@ func MockDB() (*sql.DB, sqlmock.Sqlmock) {
 	return db, mock
 }
 
+// TestSchema is a unit test function that tests the Schema method of the Postgres struct.
+// It creates a mock instance of Postgres, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestSchema(t *testing.T) {
+	// create a new mock database connection
 	db, mock := MockDB()
 	defer db.Close()
 
-	table_name := "user"
+	table_name := "user" // table name to be used in the test
 
+	// mock rows to be returned by the query
 	columns := []string{"name", "type", "IsNullable", "DefaultValue", "CharacterMaximumLength", "OrdinalPosition", "Visibility", "IsPrimary", "IsUpdatable"}
 	mockRows := sqlmock.NewRows(columns).AddRow("id", "int", "No", "", 0, 1, true, true, true)
-
+	// set the expected return values for the query
 	mock.ExpectQuery(regexp.QuoteMeta(POSTGRES_SCHEMA_QUERY)).WithArgs(table_name).WillReturnRows(mockRows)
 
+	// we then create a new instance of our Postgres object and test the function
 	m, err := NewPostgres(db)
 	if err != nil {
 		t.Errorf("error initialising postgres: %s", err)
 	}
-	response, err := m.Schema(table_name)
+	response, err := m.Schema(table_name) // call the Schema method
 	if err != nil {
 		t.Errorf("error executing query : %v", err)
 	}
@@ -50,20 +57,27 @@ func TestSchema(t *testing.T) {
 	}
 }
 
+// TestExecute is a unit test function that tests the Execute method of the Postgres struct.
+// It creates a mock instance of Postgres, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestExecute(t *testing.T) {
+	// create a new mock database connection
 	db, mock := MockDB()
 	defer db.Close()
 
+	//	we then create a new instance of our Postgres object and test the function
 	query := `SELECT id, name FROM user`
-	mockRows := sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "Rohan")
+	mockRows := sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "Rohan") // mock rows to be returned by the query
 
+	// set the expected return values for the query
 	mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(mockRows)
 
+	// create a new instance of our Postgres object
 	p, err := NewPostgres(db)
 	if err != nil {
 		t.Errorf("error executing query: %s", err)
 	}
-	res, err := p.Execute(query)
+	res, err := p.Execute(query) // call the Execute method
 	if err != nil {
 		t.Errorf("error executing the query: %s", err)
 	}
@@ -79,23 +93,26 @@ func TestExecute(t *testing.T) {
 	}
 }
 
+// TestGetTableName is a unit test function that tests the Tables method of the Postgres struct.
+// It creates a mock instance of Postgres, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestGetTableName(t *testing.T) {
-	db, mock := MockDB()
+	db, mock := MockDB() // create a new mock database connection
 	defer db.Close()
 
-	tableList := []string{"user", "Credit", "Debit"}
+	tableList := []string{"user", "Credit", "Debit"} // list of tables to be used in the test
 	DatabaseName := "test"
-	rows := sqlmock.NewRows([]string{"table_name"}).
-		AddRow(tableList[0]).
-		AddRow(tableList[1]).
-		AddRow(tableList[2])
+	rows := sqlmock.NewRows([]string{"table_name"}). // mock rows to be returned by the query
+								AddRow(tableList[0]).
+								AddRow(tableList[1]).
+								AddRow(tableList[2])
 	mock.ExpectQuery(regexp.QuoteMeta(POSTGRES_TABLE_LIST_QUERY)).WithArgs(DatabaseName).WillReturnRows(rows)
 
-	p, err := NewPostgres(db)
+	p, err := NewPostgres(db) // create a new instance of our Postgres object
 	if err != nil {
 		t.Errorf("error executing query: %s", err)
 	}
-	tables, err := p.Tables(DatabaseName)
+	tables, err := p.Tables(DatabaseName) // call the Tables method
 	if err != nil {
 		t.Errorf("error retrieving table names: %s", err)
 	}

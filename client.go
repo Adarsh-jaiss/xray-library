@@ -6,7 +6,7 @@ import (
 
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/databases/bigquery"
-	
+
 	"github.com/thesaas-company/xray/databases/mysql"
 	"github.com/thesaas-company/xray/databases/postgres"
 	"github.com/thesaas-company/xray/databases/redshift"
@@ -49,7 +49,7 @@ func NewClientWithConfig(dbConfig *config.Config, dbType types.DbType) (types.IS
 			return nil, err
 		}
 		return logger.NewLogger(redshiftClient), nil
-	
+
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", dbType)
 	}
@@ -57,7 +57,7 @@ func NewClientWithConfig(dbConfig *config.Config, dbType types.DbType) (types.IS
 
 // NewClient creates a new SQL client with the given database client and database type.
 // It returns an error if the database type is not supported or if there is a problem creating the client.
-func NewClient(dbClient *sql.DB , bq *bigquery.BigQuery, rs *redshift.Redshift,  dbType types.DbType) (types.ISQL, error) {
+func NewClient(dbClient *sql.DB, bq *bigquery.BigQuery, rs *redshift.Redshift, dbType types.DbType) (types.ISQL, error) {
 
 	switch dbType {
 	case types.MySQL:
@@ -85,7 +85,7 @@ func NewClient(dbClient *sql.DB , bq *bigquery.BigQuery, rs *redshift.Redshift, 
 		}
 		return logger.NewLogger(BigQueryClient), nil
 	case types.Redshift:
-		redshiftClient, err :=  redshift.NewRedshift(rs.Client)
+		redshiftClient, err := redshift.NewRedshift(rs.Client)
 		if err != nil {
 			return nil, err
 		}

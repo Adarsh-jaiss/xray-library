@@ -32,6 +32,9 @@ func (m *MockBigQuery) Tables(dataset string) ([]string, error) {
 	return args.Get(0).([]string), args.Error(1)
 }
 
+// TestBigQuery_Schema is a unit test function that tests the Schema method of the BigQuery struct.
+// It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestBigQuery_Schema(t *testing.T) {
 	// Create a new instance of the mock
 	mockBigQuery := new(MockBigQuery)
@@ -65,6 +68,9 @@ func TestBigQuery_Schema(t *testing.T) {
 	fmt.Println(expectedSchema, actualSchema)
 }
 
+// TestBigQuery_Execute is a unit test function that tests the Execute method of the BigQuery struct.
+// It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestBigQuery_Execute(t *testing.T) {
 	// Create a new instance of the mock
 	mockBigQuery := new(MockBigQuery)
@@ -85,6 +91,9 @@ func TestBigQuery_Execute(t *testing.T) {
 	fmt.Println(expectedResult, actualResult)
 }
 
+// TestBigQuery_Tables is a unit test function that tests the Tables method of the BigQuery struct.
+// It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestBigQuery_Tables(t *testing.T) {
 	// Create a new instance of the mock
 	mockBigQuery := new(MockBigQuery)

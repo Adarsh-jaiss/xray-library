@@ -19,6 +19,8 @@ type BigQuery struct {
 	Config *config.Config
 }
 
+// NewBigQuery creates a new instance of BigQuery with the provided client.
+// It returns an instance of types.ISQL and an error.
 func NewBigQuery(client *bigquery.Client) (types.ISQL, error) {
 	return &BigQuery{
 		Client: client,
@@ -26,6 +28,7 @@ func NewBigQuery(client *bigquery.Client) (types.ISQL, error) {
 	}, nil
 }
 
+// NewBigQueryWithConfig creates a new instance of BigQuery with the provided configuration.
 func NewBigQueryWithConfig(cfg *config.Config) (types.ISQL, error) {
 	ctx := context.Background()
 	client, err := bigquery.NewClient(ctx, cfg.ProjectID, option.WithCredentialsFile(cfg.JSONKeyPath))
@@ -75,8 +78,8 @@ func (b *BigQuery) Schema(table string) (types.Table, error) {
 	return schema, nil
 }
 
-// Execute runs a query in BigQuery and returns the results as a byte slice.
-// It takes a query string as input and returns a byte slice and an error.
+// Execute executes the given query on BigQuery and returns the query results as JSON.
+// It returns an error if there was an issue running the query or reading the results.
 func (b *BigQuery) Execute(query string) ([]byte, error) {
 	ctx := context.Background()
 	q := b.Client.Query(query)
@@ -124,7 +127,6 @@ func (b *BigQuery) Execute(query string) ([]byte, error) {
 
 // Tables returns a list of tables in a dataset.
 // It takes a dataset name as input and returns a slice of strings and an error.
-
 func (b *BigQuery) Tables(Dataset string) ([]string, error) {
 	res := b.Client.Dataset(Dataset).Tables(context.Background())
 	var tables []string
