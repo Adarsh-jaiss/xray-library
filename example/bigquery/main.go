@@ -11,7 +11,7 @@ import (
 func main() {
 	config := &config.Config{
 		ProjectID:    "ProjectID",
-		JSONKeyPath:  "JSONKeyPath",
+		JSONKeyPath:  "/JSONKeyPath",
 		DatabaseName: "Database_Name",
 	}
 
