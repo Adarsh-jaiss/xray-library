@@ -17,9 +17,15 @@ go get github.com/thesaas-company/xray@latest
 
 - Download go 1.22
 - Clone this repo 
-- `cd xray`
+- Navigate to the `xray` directory.
 - Run this command to install the dependencies : `go mod install`
 
 ## Maintainer
 - [@Adarsh Jaiswal](https://github.com/adarsh-jaiss)
 - [@tqindia](https://github.com/tqindia)
+
+## Show Your Support!
+
+If you find XRay useful, please consider starring the repository on GitHub to show your support:
+
+
