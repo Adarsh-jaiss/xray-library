@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	sf "github.com/snowflakedb/gosnowflake"
 	"github.com/thesaas-company/xray/config"
@@ -188,4 +189,32 @@ func (s *Snowflake) Execute(query string) ([]byte, error) {
 	}
 
 	return jsonData, nil
+}
+
+func (s *Snowflake) GenerateCreateTableQuery(table types.Table) string {
+	query := "CREATE TABLE " + table.Name + " ("
+	for i, column := range table.Columns {
+		colType := strings.ToUpper(column.Type)
+		query += column.Name + " " + colType
+		if column.AutoIncrement {
+			query += " AUTOINCREMENT"
+		}
+		if column.IsPrimary {
+			query += " PRIMARY KEY"
+		}
+		if column.DefaultValue.Valid {
+			query += " DEFAULT " + column.DefaultValue.String
+		}
+		if column.IsUnique.String == "YES" {
+			query += " UNIQUE"
+		}
+		if column.IsNullable == "NO" && !column.IsPrimary {
+			query += " NOT NULL"
+		}
+		if i < len(table.Columns)-1 {
+			query += ", "
+		}
+	}
+	query += ");"
+	return query
 }

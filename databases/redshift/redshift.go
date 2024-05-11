@@ -3,6 +3,8 @@ package redshift
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 
@@ -56,18 +58,18 @@ func NewRedshiftWithConfig(cfg *config.Config) (types.ISQL, error) {
 }
 
 func (r *Redshift) RedshiftAPIService(config *config.Config, query string) (*redshiftdataapiservice.RedshiftDataAPIService, *redshiftdataapiservice.ExecuteStatementInput) {
-    // config.AWS.SecretArn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:My	DBSecret-a1b2c3"
-    // config.AWS.ClusterIdentifier = "my-cluster"
-    // config.DatabaseName = "my-database"
-    svc := redshiftdataapiservice.New(session.Must(session.NewSession(&aws.Config{})))
-    input := &redshiftdataapiservice.ExecuteStatementInput{
-        ClusterIdentifier: aws.String(r.config.AWS.ClusterIdentifier),
-        Database:          aws.String(r.config.DatabaseName),
-        SecretArn:         aws.String(r.config.AWS.SecretArn),
-        Sql:               aws.String(query),
-    }
+	// config.AWS.SecretArn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:My	DBSecret-a1b2c3"
+	// config.AWS.ClusterIdentifier = "my-cluster"
+	// config.DatabaseName = "my-database"
+	svc := redshiftdataapiservice.New(session.Must(session.NewSession(&aws.Config{})))
+	input := &redshiftdataapiservice.ExecuteStatementInput{
+		ClusterIdentifier: aws.String(r.config.AWS.ClusterIdentifier),
+		Database:          aws.String(r.config.DatabaseName),
+		SecretArn:         aws.String(r.config.AWS.SecretArn),
+		Sql:               aws.String(query),
+	}
 
-    return svc, input
+	return svc, input
 }
 
 // Schema returns the schema of a table in Redshift.
@@ -167,4 +169,33 @@ func (r *Redshift) Tables(DatabaseName string) ([]string, error) {
 		}
 	}
 	return tables, nil
+}
+
+func (r *Redshift) GenerateCreateTableQuery(table types.Table) string {
+	query := fmt.Sprintf("CREATE TABLE %s.%s.%s (", r.config.DatabaseName, r.config.Schema, table.Name)
+	for i, column := range table.Columns {
+		colType := strings.ToUpper(column.Type)
+		query += column.Name + " " + colType
+		if column.IsPrimary {
+			query += " PRIMARY KEY"
+		}
+		if column.AutoIncrement {
+			query += " IDENTITY(1,1)"
+		}
+
+		if column.DefaultValue.Valid {
+			query += fmt.Sprintf(" DEFAULT %s", column.DefaultValue.String)
+		}
+		if column.IsUnique.String == "YES" {
+			query += " UNIQUE"
+		}
+		if column.IsNullable == "NO" {
+			query += " NOT NULL"
+		}
+		if i < len(table.Columns)-1 {
+			query += ", "
+		}
+	}
+	query += ");"
+	return query
 }

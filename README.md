@@ -67,6 +67,36 @@ func main() {
 		response = append(response, table)
 	}
 	fmt.Println(response)
+
+	table := types.Table{
+		Name: "user",
+		Columns: []types.Column{
+			{
+				Name:         "id",
+				Type:         "int",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    true,
+				IsUnique:     sql.NullString{String: "YES", Valid: true},
+			},
+			{
+				Name:         "name",
+				Type:         "varchar(255)",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    false,
+				IsUnique:     sql.NullString{String: "NO", Valid: true},
+			},
+			{
+				Name:       "age",
+				Type:       "int",
+				IsNullable: "YES",
+			},
+		},
+	}
+
+	query := client.GenerateCreateTableQuery(table)
+	fmt.Println(query)
 }
 
 ```
@@ -88,6 +118,11 @@ docker run -d --name postgres \
   -e POSTGRES_DB=employees \
   -v "$(pwd)/data:/var/lib/postgresql/data" \
   postgres:13.2-alpine
+```
+
+- Set Password in env variable
+```bash
+export DB_PASSWORD=root
 ```
 
 - To inspect and execute queries in Postgres database, Create a main.go file and adding the below example into it.
@@ -148,6 +183,10 @@ go run main.go
 
 - To inspect and execute queries in snowflake database, Create a main.go file and adding the below example into it.
 
+ - Set Password in env variable
+```bash
+export DB_PASSWORD=<DB_PASSWORD>
+```
 
 ```
 package main

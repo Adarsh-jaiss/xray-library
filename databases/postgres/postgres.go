@@ -205,6 +205,31 @@ func (p *Postgres) Tables(databaseName string) ([]string, error) {
 	return tables, nil
 }
 
+func (p *Postgres) GenerateCreateTableQuery(table types.Table) string {
+	query := `CREATE TABLE "` + table.Name + `" (`
+	for i, col := range table.Columns {
+		colType := strings.ToUpper(col.Type)
+		query += col.Name + " " + colType
+		if col.IsPrimary {
+			query += " PRIMARY KEY"
+		}
+		if col.DefaultValue.Valid {
+			query += " DEFAULT " + col.DefaultValue.String
+		}
+		if col.IsUnique.String == "YES" {
+			query += " UNIQUE"
+		}
+		if col.IsNullable == "NO" {
+			query += " NOT NULL"
+		}
+		if i < len(table.Columns)-1 {
+			query += ", "
+		}
+	}
+	query += ");"
+	return query
+}
+
 // TableToString returns a string representation of a table.
 // It is used for debugging purposes.
 

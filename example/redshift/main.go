@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/thesaas-company/xray/config"
@@ -26,6 +27,36 @@ func main() {
 		fmt.Printf("Error creating Redshift instance: %v\n", err)
 		return
 	}
+
+	table := types.Table{
+		Name: "user",
+		Columns: []types.Column{
+			{
+				Name:         "id",
+				Type:         "int",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    true,
+				IsUnique:     sql.NullString{String: "YES", Valid: true},
+			},
+			{
+				Name:         "name",
+				Type:         "varchar(255)",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    false,
+				IsUnique:     sql.NullString{String: "NO", Valid: true},
+			},
+			{
+				Name:       "age",
+				Type:       "int",
+				IsNullable: "YES",
+			},
+		},
+	}
+
+	res := rs.GenerateCreateTableQuery(table)
+	fmt.Println(res)
 
 	query := "SELECT * FROM my_table"
 	result, err := rs.Execute(query)
