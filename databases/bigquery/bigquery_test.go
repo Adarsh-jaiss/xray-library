@@ -1,6 +1,7 @@
 package bigquery
 
 import (
+	"database/sql"
 	"fmt"
 	"testing"
 
@@ -32,6 +33,14 @@ func (m *MockBigQuery) Tables(dataset string) ([]string, error) {
 	return args.Get(0).([]string), args.Error(1)
 }
 
+func (m *MockBigQuery) GenerateCreateTableQuery(table types.Table) string {
+	args := m.Called(table)
+	return args.Get(0).(string)
+}
+
+// TestBigQuery_Schema is a unit test function that tests the Schema method of the BigQuery struct.
+// It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestBigQuery_Schema(t *testing.T) {
 	// Create a new instance of the mock
 	mockBigQuery := new(MockBigQuery)
@@ -65,6 +74,9 @@ func TestBigQuery_Schema(t *testing.T) {
 	fmt.Println(expectedSchema, actualSchema)
 }
 
+// TestBigQuery_Execute is a unit test function that tests the Execute method of the BigQuery struct.
+// It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestBigQuery_Execute(t *testing.T) {
 	// Create a new instance of the mock
 	mockBigQuery := new(MockBigQuery)
@@ -85,6 +97,9 @@ func TestBigQuery_Execute(t *testing.T) {
 	fmt.Println(expectedResult, actualResult)
 }
 
+// TestBigQuery_Tables is a unit test function that tests the Tables method of the BigQuery struct.
+// It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestBigQuery_Tables(t *testing.T) {
 	// Create a new instance of the mock
 	mockBigQuery := new(MockBigQuery)
@@ -103,4 +118,48 @@ func TestBigQuery_Tables(t *testing.T) {
 	// Assert that the method was called with the correct arguments
 	mockBigQuery.AssertCalled(t, "Tables", "dataset")
 	fmt.Println(expectedTables, actualTables)
+}
+
+func TestGenerateCreateTableQuery(t *testing.T) {
+	table := types.Table{
+		Name:    "user",
+		Dataset: "Datasherlocks",
+		Columns: []types.Column{
+			{
+				Name:         "id",
+				Type:         "int",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    true,
+				IsUnique:     sql.NullString{String: "YES", Valid: true},
+			},
+			{
+				Name:         "name",
+				Type:         "VARCHAR(255)",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    false,
+				IsUnique:     sql.NullString{String: "YES", Valid: true},
+			},
+			{
+				Name:       "age",
+				Type:       "INT",
+				IsNullable: "YES",
+			},
+		},
+	}
+
+	// Create a new instance of the mock
+	mockBigQuery := new(MockBigQuery)
+
+	// Set the expected return values
+	expectedQuery := "CREATE TABLE Datasherlocks.user (id int PRIMARY KEY, name VARCHAR(255) UNIQUE, age INT);"
+
+	mockBigQuery.On("GenerateCreateTableQuery", table).Return(expectedQuery)
+
+	// Call the method under test
+	query := mockBigQuery.GenerateCreateTableQuery(table)
+
+	// Assert the expected return values
+	assert.Equal(t, expectedQuery, query)
 }

@@ -6,47 +6,30 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	sf "github.com/snowflakedb/gosnowflake"
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
 )
 
+// Snowflake is a Snowflake implementation of the ISQL interface.
 type Snowflake struct {
-	Client *sql.DB
-	Config *config.Config
+	Client *sql.DB        // Client is the database client for Snowflake.
+	Config *config.Config // Config is the configuration for Snowflake.
 }
 
+// DB_PASSWORD is the environment variable name for the database password.
 var DB_PASSWORD string = "DB_PASSWORD"
 
 const (
+	// SNOWFLAKE_TABLES_LIST_QUERY is the query to list tables in Snowflake.
 	SNOWFLAKE_TABLES_LIST_QUERY = "SHOW TERSE TABLES"
-	SNOWFLAKE_SCHEMA_QUERY      = `
-	SELECT 
-		COLUMN_NAME, 
-		DATA_TYPE, 
-		IS_NULLABLE, 
-		COLUMN_DEFAULT, 
-		IS_UPDATABLE, 
-		IS_IDENTITY, 
-		IS_GENERATED, 
-		IS_UNIQUE, 
-		IS_SYSTEM_COLUMN, 
-		IS_HIDDEN, 
-		IS_READ_ONLY, 
-		IS_COMPUTED, 
-		IS_SPARSE, 
-		IS_COLUMN_SET, 
-		IS_SELF_REFERENCING, 
-		SCOPE_NAME, 
-		SCOPE_SCHEMA, 
-		ORDINAL_POSITION 
-	FROM INFORMATION_SCHEMA.COLUMNS 
-	WHERE TABLE_NAME = ?)
-	`
+	// SNOWFLAKE_SCHEMA_QUERY is the query to retrieve schema information for a table in Snowflake.
+	SNOWFLAKE_SCHEMA_QUERY = "SELECT column_name::TEXT, data_type::TEXT FROM information_schema.columns WHERE table_name::TEXT = ?;"
 )
 
-// The NewSnowflake function is responsible for creating a new Snowflake object with an initialized database client and configuration.
+// NewSnowflake creates a new Snowflake object with an initialized database client and configuration.
 func NewSnowflake(dbClient *sql.DB) (types.ISQL, error) {
 	return &Snowflake{
 		Client: dbClient,
@@ -54,7 +37,7 @@ func NewSnowflake(dbClient *sql.DB) (types.ISQL, error) {
 	}, nil
 }
 
-// The NewSnowflakeWithConfig function is responsible for creating a new Snowflake object with an initialized database client and configuration.
+// NewSnowflakeWithConfig creates a new Snowflake object with an initialized database client and configuration.
 func NewSnowflakeWithConfig(config *config.Config) (types.ISQL, error) {
 	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 {
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
@@ -78,7 +61,7 @@ func NewSnowflakeWithConfig(config *config.Config) (types.ISQL, error) {
 	}
 	fmt.Println(dsn)
 	dbType := types.Snowflake
-	db, err := sql.Open(dbType.String(), dsn)
+	db, err := sql.Open(dbType.String(), dsn) // open a connection to the snowflake database
 	if err != nil {
 		return nil, fmt.Errorf("error opening connection to snowflake database: %v", err)
 	}
@@ -90,7 +73,7 @@ func NewSnowflakeWithConfig(config *config.Config) (types.ISQL, error) {
 
 }
 
-// The Schema function returns the schema of a table in Snowflake.
+// Schema returns the schema of a table in Snowflake.
 func (s *Snowflake) Schema(table string) (types.Table, error) {
 	var res types.Table
 
@@ -103,25 +86,7 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 	var columns []types.Column
 	for rows.Next() {
 		var column types.Column
-		if err := rows.Scan(
-			&column.Name,
-			&column.Type,
-			&column.IsNullable,
-			&column.ColumnDefault,
-			&column.IsUpdatable,
-			&column.IsIdentity,
-			&column.IsGenerated,
-			&column.IsUnique,
-			&column.IsSystemColumn,
-			&column.IsHidden,
-			&column.IsReadOnly,
-			&column.IsComputed,
-			&column.IsSparse,
-			&column.IsColumnSet,
-			&column.IsSelfReferencing,
-			&column.ScopeName,
-			&column.ScopeSchema,
-			&column.OrdinalPosition); err != nil {
+		if err := rows.Scan(&column.Name, &column.Type); err != nil {
 			return res, fmt.Errorf("error scanning rows: %v", err)
 		}
 		column.Description = ""      // default description
@@ -131,7 +96,7 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 		columns = append(columns, column)
 	}
 
-	// checking for erros from iterating over the rows
+	// checking for errors from iterating over the rows
 	if err := rows.Err(); err != nil {
 		return res, fmt.Errorf("error iterating over rows: %v", err)
 	}
@@ -145,8 +110,7 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 	}, nil
 }
 
-// Every table in Snowflake lives "inside" a schema. Every schema lives "inside" a database. It's a hierarchical system.
-// The Tables function returns a list of tables in a Snowflake database.
+// Tables returns a list of tables in a Snowflake database.
 func (s *Snowflake) Tables(DatabaseName string) ([]string, error) {
 	query := fmt.Sprintf("USE WAREHOUSE %s", s.Config.Warehouse)
 
@@ -163,10 +127,11 @@ func (s *Snowflake) Tables(DatabaseName string) ([]string, error) {
 
 	var tables []string
 	for rows.Next() {
-		var table string
-		if err := rows.Scan(&table); err != nil {
+		var col1, col2, col3, col4, col5 string
+		if err := rows.Scan(&col1, &col2, &col3, &col4, &col5); err != nil {
 			return nil, fmt.Errorf("error scanning database: %v", err)
 		}
+		table := col2
 		tables = append(tables, table)
 	}
 
@@ -178,7 +143,7 @@ func (s *Snowflake) Tables(DatabaseName string) ([]string, error) {
 	return tables, nil
 }
 
-// The Execute function executes a query on a Snowflake database and returns the result as a JSON byte slice.
+// Execute executes a query on a Snowflake database and returns the result as a JSON byte slice.
 func (s *Snowflake) Execute(query string) ([]byte, error) {
 	rows, err := s.Client.Query(query)
 	if err != nil {
@@ -224,4 +189,32 @@ func (s *Snowflake) Execute(query string) ([]byte, error) {
 	}
 
 	return jsonData, nil
+}
+
+func (s *Snowflake) GenerateCreateTableQuery(table types.Table) string {
+	query := "CREATE TABLE " + table.Name + " ("
+	for i, column := range table.Columns {
+		colType := strings.ToUpper(column.Type)
+		query += column.Name + " " + colType
+		if column.AutoIncrement {
+			query += " AUTOINCREMENT"
+		}
+		if column.IsPrimary {
+			query += " PRIMARY KEY"
+		}
+		if column.DefaultValue.Valid {
+			query += " DEFAULT " + column.DefaultValue.String
+		}
+		if column.IsUnique.String == "YES" {
+			query += " UNIQUE"
+		}
+		if column.IsNullable == "NO" && !column.IsPrimary {
+			query += " NOT NULL"
+		}
+		if i < len(table.Columns)-1 {
+			query += ", "
+		}
+	}
+	query += ");"
+	return query
 }

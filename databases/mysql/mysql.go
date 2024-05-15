@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/thesaas-company/xray/config"
@@ -16,7 +17,7 @@ import (
 var DB_PASSWORD = "DB_PASSWORD"
 
 const (
-	SCHEMA_QUERY            = "DESCRIBE %s"                                                              // SCHEMA_QUERY is the SQL query used to describe a table schema.
+	SCHEMA_QUERY            = "DESCRIBE %s"                                                             // SCHEMA_QUERY is the SQL query used to describe a table schema.
 	MYSQL_TABLES_LIST_QUERY = "SELECT table_name FROM information_schema.tables WHERE table_schema = ?" // MYSQL_TABLES_LIST_QUERY is the SQL query used to list all tables in a schema.
 )
 
@@ -173,6 +174,36 @@ func (m *MySQL) Tables(databaseName string) ([]string, error) {
 	return tables, nil
 }
 
+// GenerateCreateTableQuery generates a SQL query to create a table with the same structure as the input table.
+func (m *MySQL) GenerateCreateTableQuery(table types.Table) string {
+	query := "CREATE TABLE " + table.Name + " ("
+	for i, column := range table.Columns {
+		colType := strings.ToUpper(column.Type)
+		query += column.Name + " " + colType
+		if column.AutoIncrement {
+			query += " AUTO_INCREMENT"
+		}
+		if column.IsPrimary {
+			query += " PRIMARY KEY"
+		}
+		if column.DefaultValue.Valid {
+			query += " DEFAULT " + column.DefaultValue.String
+		}
+		if column.IsUnique.String == "YES" && !column.IsPrimary {
+			query += " UNIQUE"
+		}
+		if column.IsNullable == "NO" && !column.IsPrimary {
+			query += " NOT NULL"
+		}
+		if i < len(table.Columns)-1 {
+			query += ", "
+		}
+	}
+	query += ")"
+	return query
+}
+
+// Create a new MySQL connection URL with the given configuration.
 func dbURLMySQL(dbConfig *config.Config) string {
 	return fmt.Sprintf(
 		"%s:%s@tcp(%s)/%s?tls=%v&interpolateParams=true",

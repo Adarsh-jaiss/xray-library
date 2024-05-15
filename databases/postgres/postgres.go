@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	_ "github.com/lib/pq"
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
 )
@@ -147,9 +148,11 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 	// Scan the result into a slice of slices
 	var results [][]interface{}
 	for rows.Next() {
+		// create a slice of values and pointers
 		values := make([]interface{}, len(columns))
 		pointers := make([]interface{}, len(columns))
 		for i := range values {
+			//  create a slice of pointers to the values
 			pointers[i] = &values[i]
 		}
 
@@ -201,7 +204,31 @@ func (p *Postgres) Tables(databaseName string) ([]string, error) {
 	}
 
 	return tables, nil
+}
 
+func (p *Postgres) GenerateCreateTableQuery(table types.Table) string {
+	query := `CREATE TABLE "` + table.Name + `" (`
+	for i, col := range table.Columns {
+		colType := strings.ToUpper(col.Type)
+		query += col.Name + " " + colType
+		if col.IsPrimary {
+			query += " PRIMARY KEY"
+		}
+		if col.DefaultValue.Valid {
+			query += " DEFAULT " + col.DefaultValue.String
+		}
+		if col.IsUnique.String == "YES" {
+			query += " UNIQUE"
+		}
+		if col.IsNullable == "NO" {
+			query += " NOT NULL"
+		}
+		if i < len(table.Columns)-1 {
+			query += ", "
+		}
+	}
+	query += ");"
+	return query
 }
 
 // TableToString returns a string representation of a table.

@@ -1,5 +1,6 @@
 # XRay
 
+XRay is a open source library for database schema extraction and query execution.
 
 ## Install 
 
@@ -9,27 +10,22 @@ go get github.com/thesaas-company/xray@latest
 
 ## Docs
 
-- [Go Docs](https://pkg.go.dev/github.com/thesaas-company/xray)
-- [Example](./example)
+- Official documentation : [Go Docs](https://pkg.go.dev/github.com/thesaas-company/xray)
+- Examples of different database integrations : [Example](./example)
 
-## Getting started 
+### Setting up the local development enviroment
 
-- Run a MySQL Server
-```bash
-docker run -d --name mysql-employees \
-  -p 3306:3306 \
-  -e MYSQL_ROOT_PASSWORD=college \
-  genschsa/mysql-employees
-```
-- Set Password in env variable
-```bash
-export DB_PASSWORD=college
-```
-- Run mysql example 
-```
-go mod tidy
-go run example/mysql/main.go
-```
+- Download go 1.22
+- Clone this repo 
+- Navigate to the `xray` directory.
+- Run this command to install the dependencies : `go mod install`
 
 ## Maintainer
-- @Adarsh-jaiss [Adarsh Jaiss]
+- [@Adarsh Jaiswal](https://github.com/adarsh-jaiss)
+- [@tqindia](https://github.com/tqindia)
+
+## Show Your Support!
+
+If you find XRay useful, please consider starring the repository on GitHub to show your support:
+
+

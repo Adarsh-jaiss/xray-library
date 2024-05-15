@@ -1,6 +1,7 @@
-package bigquery
+package main
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/thesaas-company/xray"
@@ -10,8 +11,9 @@ import (
 
 func main() {
 	config := &config.Config{
-		ProjectID:   "project-id",
-		JSONKeyPath: "path/to/key.json",
+		ProjectID:    "ProjectID",
+		JSONKeyPath:  "/JSONKeyPath",
+		DatabaseName: "Database_Name",
 	}
 
 	client, err := xray.NewClientWithConfig(config, types.BigQuery)
@@ -20,7 +22,37 @@ func main() {
 	}
 	fmt.Println("Connected to database")
 
-	tables, err := client.Tables("dataset")
+	table := types.Table{
+		Name: "user",
+		Columns: []types.Column{
+			{
+				Name:         "id",
+				Type:         "int",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    true,
+				IsUnique:     sql.NullString{String: "YES", Valid: true},
+			},
+			{
+				Name:         "name",
+				Type:         "varchar(255)",
+				IsNullable:   "NO",
+				DefaultValue: sql.NullString{String: "", Valid: false},
+				IsPrimary:    false,
+				IsUnique:     sql.NullString{String: "NO", Valid: true},
+			},
+			{
+				Name:       "age",
+				Type:       "int",
+				IsNullable: "YES",
+			},
+		},
+	}
+
+	query := client.GenerateCreateTableQuery(table)
+	fmt.Println(query)
+
+	tables, err := client.Tables(config.DatabaseName)
 	if err != nil {
 		panic(err)
 	}
