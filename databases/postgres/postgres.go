@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	_ "github.com/lib/pq"
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
 )
