@@ -1,0 +1,105 @@
+before:
+  hooks:
+    - go mod download
+builds:
+  - env:
+      - CGO_ENABLED=0
+    main: ./cmd/main.go
+    binary: xray
+    id: xray-darwin
+    goos:
+      - darwin
+    goarch:
+      - arm64
+      - amd64
+    ldflags:
+      - -s -w -X github.com/flyteorg/flytestdlib/version.Version={{.Version}} -X github.com/flyteorg/flytestdlib/version.Build={{.ShortCommit}} -X github.com/flyteorg/flytestdlib/version.BuildTime={{.Date}}
+  - env:
+      - CGO_ENABLED=0
+    main: ./cmd/main.go
+    binary: xray
+    id: xray-linux
+    goos:
+      - linux
+    goarch:
+      - arm64
+      - amd64
+    ldflags:
+      - -s -w -X github.com/flyteorg/flytestdlib/version.Version={{.Version}} -X github.com/flyteorg/flytestdlib/version.Build={{.ShortCommit}} -X github.com/flyteorg/flytestdlib/version.BuildTime={{.Date}}
+  - env:
+      - CGO_ENABLED=0
+    main: ./cmd/main.go
+    binary: xray
+    id: xray-windows
+    goos:
+      - windows
+    goarch:
+      - arm64
+      - amd64
+    ldflags:
+      - -s -w -X github.com/flyteorg/flytestdlib/version.Version={{.Version}} -X github.com/flyteorg/flytestdlib/version.Build={{.ShortCommit}} -X github.com/flyteorg/flytestdlib/version.BuildTime={{.Date}}
+archives:
+  - name_template: |-
+      {{ .ProjectName }}_
+      {{- if eq .Os "darwin" }}Darwin
+      {{- else if eq .Os "linux" }}Linux
+      {{- else if eq .Os "windows" }}Windows
+      {{- else }}{{ .Os }}{{ end }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+brews:
+  - # Name template of the recipe
+    # Default to project name
+    name: xray
+
+    folder: Formula
+
+    # Github repository to push the tap to.
+    tap:
+      owner: thesaas-company
+      name: homebrew-tap
+
+    # Git author used to commit to the repository.
+    # Defaults are shown.
+    commit_author:
+      name: TQ
+      email: founder@datasherlock.io
+
+    # Your app's homepage.
+    # Default is empty.
+    homepage: "https://thesaas.company"
+
+    # Your app's description.
+    # Default is empty.
+    description: "xray is a command line tool to interact with databases."
+
+    # Default is false.
+    skip_upload: auto
+release:
+  github:
+    owner: thesaas-company
+    name: xray
+  draft: false
+  ids:
+    - xray-darwin
+    - xray-linux
+    - xray-windows
+  disable: false
+  extra_files:
+    - glob: ./dist/*.tar.gz
+    - glob: ./dist/*.zip
