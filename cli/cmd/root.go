@@ -2,33 +2,107 @@ package cmd
 
 import (
 	"bufio"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"io/ioutil"
-	"gopkg.in/yaml.v3"
+	"github.com/thesaas-company/xray"
 	"github.com/thesaas-company/xray/config"
 	xrayTypes "github.com/thesaas-company/xray/types"
-	"github.com/thesaas-company/xray"
+	"gopkg.in/yaml.v3"
 )
 
 var (
 	verbose bool
 	cfgFile string
-	dbType string
+	dbType  string
 )
+
+type QueryResult struct {
+	Columns []string   `json:"columns"`
+	Rows    [][]string `json:"rows"`
+	Time    float64    `json:"time"`
+	Error   string     `json:"error"`
+}
+
+type Table struct {
+	headers []string
+	rows    [][]string
+}
+
+func NewTable(headers []string) *Table {
+	return &Table{headers: headers}
+}
+
+func (t *Table) AddRow(row []string) {
+	t.rows = append(t.rows, row)
+}
+
+func (t *Table) String() string {
+	// Find the maximum width of each column
+	columnWidths := make([]int, len(t.headers))
+	for i, header := range t.headers {
+		columnWidths[i] = len(header)
+	}
+	for _, row := range t.rows {
+		for i, cell := range row {
+			if len(cell) > columnWidths[i] {
+				columnWidths[i] = len(cell)
+			}
+		}
+	}
+
+	// Create a format string based on the column widths
+	var formatBuilder strings.Builder
+	for _, width := range columnWidths {
+		formatBuilder.WriteString(fmt.Sprintf("%%-%ds ", width))
+	}
+	formatString := formatBuilder.String()
+
+	// Print the headers
+	var result strings.Builder
+	result.WriteString(fmt.Sprintf(formatString, toInterfaceSlice(t.headers)...))
+	result.WriteRune('\n')
+
+	// Print a separator line
+	for _, width := range columnWidths {
+		result.WriteString(strings.Repeat("-", width) + " ")
+	}
+	result.WriteRune('\n')
+
+	// Print the rows
+	for _, row := range t.rows {
+		result.WriteString(fmt.Sprintf(formatString, toInterfaceSlice(row)...))
+		result.WriteRune('\n')
+	}
+
+	return result.String()
+}
+
+func toInterfaceSlice(strs []string) []interface{} {
+	result := make([]interface{}, len(strs))
+	for i, s := range strs {
+		result[i] = s
+	}
+	return result
+}
 
 // Command for interacting with databases
 var shellCmd = &cobra.Command{
 	Use:   "shell",
 	Short: "Interact with databases",
 	Run: func(cmd *cobra.Command, args []string) {
-		if verbose {
-			fmt.Println("Verbose mode activated.")
-		}
-		
+		if !verbose {
+            logrus.SetOutput(ioutil.Discard)
+        } else {
+            logrus.SetLevel(logrus.InfoLevel)
+        }
+
 		if cfgFile == "" {
 			fmt.Println("Error: Configuration file path is missing. Please use the --config flag to specify the path to your configuration file.")
 			return
@@ -50,15 +124,14 @@ var shellCmd = &cobra.Command{
 
 		db, err := xray.NewClientWithConfig(&cfg, parseDbType(dbType))
 		if err != nil {
-			fmt.Printf("Error Failed to connect database: %s: %v\n", dbType, err)
+			fmt.Printf("Error: Failed to connect to database: %s: %v\n", dbType, err)
 			return
 		}
 
 		fmt.Println("Welcome to database shell!")
-		
+
 		reader := bufio.NewReader(os.Stdin)
 		for {
-
 			fmt.Print("> ")
 			query, err := reader.ReadString('\n')
 			if err != nil {
@@ -75,7 +148,36 @@ var shellCmd = &cobra.Command{
 				fmt.Println("Error executing query:", err)
 				continue
 			}
-			fmt.Println(string(b))
+
+			var result QueryResult
+			err = json.Unmarshal(b, &result)
+			if err != nil {
+				fmt.Println("Error parsing query result:", err)
+				continue
+			}
+
+			if len(result.Rows) == 0 {
+				fmt.Println("No results found.")
+				continue
+			}
+
+			table := NewTable(result.Columns)
+			for _, row := range result.Rows {
+				decodedRow := make([]string, len(row))
+				for i, v := range row {
+					decodedValue, err := base64.StdEncoding.DecodeString(v)
+					if err != nil {
+						fmt.Println("Error decoding base64 value:", err)
+						decodedRow[i] = v // Use original value if decoding fails
+					} else {
+						decodedRow[i] = string(decodedValue)
+					}
+				}
+				table.AddRow(decodedRow)
+			}
+
+			// Print the table
+			fmt.Println(table.String())
 		}
 	},
 }
@@ -93,12 +195,10 @@ func Execute() {
 }
 
 func init() {
-
 }
 
-
 // ParseDbType parses a string and returns the corresponding DbType.
-func parseDbType(s string) (xrayTypes.DbType) {
+func parseDbType(s string) xrayTypes.DbType {
 	switch strings.ToLower(s) {
 	case "mysql":
 		return xrayTypes.MySQL
