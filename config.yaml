@@ -1,0 +1,6 @@
+host: 127.0.0.1
+username: root
+database: employees
+port: 3306
+ssl: false
+Debug: true

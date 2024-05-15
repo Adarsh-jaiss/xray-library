@@ -7,6 +7,17 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"io/ioutil"
+	"gopkg.in/yaml.v3"
+	"github.com/thesaas-company/xray/config"
+	xrayTypes "github.com/thesaas-company/xray/types"
+	"github.com/thesaas-company/xray"
+)
+
+var (
+	verbose bool
+	cfgFile string
+	dbType string
 )
 
 // Command for interacting with databases
@@ -14,10 +25,40 @@ var shellCmd = &cobra.Command{
 	Use:   "shell",
 	Short: "Interact with databases",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Welcome to database shell!")
+		if verbose {
+			fmt.Println("Verbose mode activated.")
+		}
+		
+		if cfgFile == "" {
+			fmt.Println("Error: Configuration file path is missing. Please use the --config flag to specify the path to your configuration file.")
+			return
+		}
 
+		// Read the YAML file
+		configData, err := ioutil.ReadFile(cfgFile)
+		if err != nil {
+			fmt.Printf("Error: Failed to read YAML file: %v\n", err)
+			return
+		}
+
+		var cfg config.Config
+		err = yaml.Unmarshal(configData, &cfg)
+		if err != nil {
+			fmt.Printf("Error: Failed to unmarshal YAML: %v\n", err)
+			return
+		}
+
+		db, err := xray.NewClientWithConfig(&cfg, parseDbType(dbType))
+		if err != nil {
+			fmt.Printf("Error Failed to connect database: %s: %v\n", dbType, err)
+			return
+		}
+
+		fmt.Println("Welcome to database shell!")
+		
 		reader := bufio.NewReader(os.Stdin)
 		for {
+
 			fmt.Print("> ")
 			query, err := reader.ReadString('\n')
 			if err != nil {
@@ -29,40 +70,47 @@ var shellCmd = &cobra.Command{
 				fmt.Println("Exiting shell.")
 				break
 			}
-			// Use xray lib to run the query and print the output like mysql and postgres cli
-			fmt.Println(query)
-
+			b, err := db.Execute(query)
+			if err != nil {
+				fmt.Println("Error executing query:", err)
+				continue
+			}
+			fmt.Println(string(b))
 		}
-	},
-}
-
-// Command for interacting with databases
-var serveCmd = &cobra.Command{
-	Use:   "serve",
-	Short: "serve databases",
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Welcome to database serve!")
-		// TDOD: Add Connect RPC Server
 	},
 }
 
 func Execute() {
 	rootCmd := &cobra.Command{Use: "xray"}
-	rootCmd.AddCommand(shellCmd)
-	rootCmd.AddCommand(serveCmd)
 
+	rootCmd.AddCommand(shellCmd)
+	shellCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
+	shellCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config.yaml")
+	shellCmd.PersistentFlags().StringVarP(&dbType, "type", "t", "mysql", "Database type like mysql, postgres, bigquery")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 	}
 }
 
 func init() {
-	// Add subcommands to the shell command
-	shellCmd.AddCommand(mysqlCmd)
-	shellCmd.AddCommand(postgresCmd)
-	shellCmd.AddCommand(bigqueryCmd)
-	shellCmd.AddCommand(redshiftCmd)
-	// shellCmd.AddCommand(SnowflakeCmd)
-	// Add subcommands to the serve command
 
+}
+
+
+// ParseDbType parses a string and returns the corresponding DbType.
+func parseDbType(s string) (xrayTypes.DbType) {
+	switch strings.ToLower(s) {
+	case "mysql":
+		return xrayTypes.MySQL
+	case "postgres":
+		return xrayTypes.Postgres
+	case "snowflake":
+		return xrayTypes.Snowflake
+	case "bigquery":
+		return xrayTypes.BigQuery
+	case "redshift":
+		return xrayTypes.Redshift
+	default:
+		return xrayTypes.MySQL
+	}
 }

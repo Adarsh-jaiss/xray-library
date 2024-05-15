@@ -80,3 +80,5 @@ func (w DbType) String() string {
 func (w DbType) Index() int {
 	return int(w)
 }
+
+
