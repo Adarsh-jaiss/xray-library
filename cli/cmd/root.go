@@ -24,10 +24,10 @@ var (
 )
 
 type QueryResult struct {
-	Columns []string   `json:"columns"`
-	Rows    [][]string `json:"rows"`
-	Time    float64    `json:"time"`
-	Error   string     `json:"error"`
+	Columns []string        `json:"columns"`
+	Rows    [][]interface{} `json:"rows"`
+	Time    float64         `json:"time"`
+	Error   string          `json:"error"`
 }
 
 type Table struct {
@@ -98,10 +98,10 @@ var shellCmd = &cobra.Command{
 	Short: "Interact with databases",
 	Run: func(cmd *cobra.Command, args []string) {
 		if !verbose {
-            logrus.SetOutput(ioutil.Discard)
-        } else {
-            logrus.SetLevel(logrus.InfoLevel)
-        }
+			logrus.SetOutput(ioutil.Discard)
+		} else {
+			logrus.SetLevel(logrus.InfoLevel)
+		}
 
 		if cfgFile == "" {
 			fmt.Println("Error: Configuration file path is missing. Please use the --config flag to specify the path to your configuration file.")
@@ -163,17 +163,22 @@ var shellCmd = &cobra.Command{
 
 			table := NewTable(result.Columns)
 			for _, row := range result.Rows {
-				decodedRow := make([]string, len(row))
+				stringRow := make([]string, len(row))
 				for i, v := range row {
-					decodedValue, err := base64.StdEncoding.DecodeString(v)
-					if err != nil {
-						fmt.Println("Error decoding base64 value:", err)
-						decodedRow[i] = v // Use original value if decoding fails
-					} else {
-						decodedRow[i] = string(decodedValue)
+					switch value := v.(type) {
+					case string:
+						decodedValue, err := base64.StdEncoding.DecodeString(value)
+						if err != nil {
+							fmt.Println("Error decoding base64 value:", err)
+							stringRow[i] = value // Use original value if decoding fails
+						} else {
+							stringRow[i] = string(decodedValue)
+						}
+					default:
+						stringRow[i] = fmt.Sprintf("%v", value)
 					}
 				}
-				table.AddRow(decodedRow)
+				table.AddRow(stringRow)
 			}
 
 			// Print the table
