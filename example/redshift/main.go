@@ -12,8 +12,8 @@ import (
 func main() {
 	// Define the configuration for the Redshift instance
 	cfg := &config.Config{
-		Region: 	"my-region-us-west-2",
-		AccountID: 	"123456789012",
+		Region:     "my-region-us-west-2",
+		AccountID:  "123456789012",
 		SecretName: "my-secret",
 	}
 

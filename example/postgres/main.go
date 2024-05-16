@@ -70,6 +70,4 @@ func main() {
 	}
 	fmt.Println(response)
 
-	
-
 }

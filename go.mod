@@ -4,7 +4,6 @@ go 1.22
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/aws/aws-sdk-go v1.53.2
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/lib/pq v1.10.9
 	github.com/mashiike/redshift-data-sql-driver v0.2.0

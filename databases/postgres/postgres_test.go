@@ -170,5 +170,5 @@ func TestGenerateCreateTablequery(t *testing.T) {
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("There were unfulfilled expectations: %s", err)
-	}	
+	}
 }
