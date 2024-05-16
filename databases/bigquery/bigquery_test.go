@@ -2,8 +2,9 @@ package bigquery
 
 import (
 	"database/sql"
-	// "encoding/json"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"testing"
 
@@ -57,48 +58,6 @@ func TestSchema(t *testing.T) {
 // It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
 // It then asserts the expected return values and checks if the method was called with the correct arguments.
 
-// func TestExecute(t *testing.T) {
-// 	// create a new mock database connection
-// 	db, mock := MockDB()
-// 	defer db.Close()
-
-// 	// query to be executed
-// 	query := `SELECT * FROM my_project.test.test.my_table`
-// 	mockRows :=  // mock rows to be returned by the query
-
-// 	// set the expected return values for the query
-// 	mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(mockRows)
-
-// 	// create a new instance of our BigQuery object and test the function
-// 	b, err := NewBigQuery(db)
-// 	if err != nil {
-// 		t.Errorf("error initializing bigquery: %s", err)
-// 	}
-
-// 	// call the Execute method
-// 	rows, err := b.Execute(query)
-// 	if err != nil {
-// 		t.Errorf("error executing query: %s", err)
-// 	}
-
-// 	// process the returned rows
-// 	for rows.Next() {
-// 		var id int
-// 		var name string
-// 		err := rows.Scan(&id, &name)
-// 		if err != nil {
-// 			t.Errorf("error scanning row: %s", err)
-// 		}
-// 		// process the row data
-// 		fmt.Printf("ID: %d, Name: %s\n", id, name)
-// 	}
-
-// 	// check if all expectations were met
-// 	if err := mock.ExpectationsWereMet(); err != nil {
-// 		t.Errorf("there were unfulfilled expectations: %s", err)
-// 	}
-// }
-
 func TestGetTableName(t *testing.T) {
 	// create a new mock database connection
 	db, mock := MockDB()
@@ -111,9 +70,9 @@ func TestGetTableName(t *testing.T) {
 		AddRow(tableList[0]).
 		AddRow(tableList[1]).
 		AddRow(tableList[2])
-	mock.ExpectQuery(regexp.QuoteMeta(fmt.Sprintf(BigQuery_TABLES_QUERY,schema))).WillReturnRows(rows) // set the expected return values for the query
+	mock.ExpectQuery(regexp.QuoteMeta(fmt.Sprintf(BigQuery_TABLES_QUERY, schema))).WillReturnRows(rows) // set the expected return values for the query
 
-	b,err := NewBigQuery(db) // create a new instance of our BigQuery object
+	b, err := NewBigQuery(db) // create a new instance of our BigQuery object
 	if err != nil {
 		t.Errorf("error executing query: %s", err)
 	}
@@ -124,24 +83,62 @@ func TestGetTableName(t *testing.T) {
 
 	fmt.Printf("Tables: %+v\n", tables)
 
-
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
 
+func TestExecute(t *testing.T) {
+	// create a new mock database connection
+	db, mock := MockDB()
+	defer db.Close()
 
+	// query to be executed
+	query := "SELECT * FROM `my_project.test.test.my_table`"
 
+	// Prepare the rows that will be returned by the query
+	mockRows := sqlmock.NewRows([]string{"column1", "column2"}).
+		AddRow("value1", "value2").
+		AddRow("value3", "value4")
 
+	// Set the expected return values for the query
+	mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(mockRows)
 
+	// create a new instance of our BigQuery object
+	b, err := NewBigQuery(db)
+	if err != nil {
+		t.Errorf("error initializing bigquery: %s", err)
+	}
 
+	// call the Execute method
+	jsonData, err := b.Execute(query)
+	if err != nil {
+		t.Errorf("error executing query: %s", err)
+	}
 
+	// Unmarshal the JSON data
+	var result types.QueryResult
+	if err := json.Unmarshal(jsonData, &result); err != nil {
+		t.Errorf("error unmarshaling json: %s", err)
+	}
 
+	// Check if the returned columns match the expected columns
+	expectedColumns := []string{"column1", "column2"}
+	if !reflect.DeepEqual(result.Columns, expectedColumns) {
+		t.Errorf("expected %v, got %v", expectedColumns, result.Columns)
+	}
 
+	// Check if the returned rows match the expected rows
+	expectedRows := [][]interface{}{{"value1", "value2"}, {"value3", "value4"}}
+	if !reflect.DeepEqual(result.Rows, expectedRows) {
+		t.Errorf("expected %v, got %v", expectedRows, result.Rows)
+	}
 
-
-
-
+	// Check if all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
 
 func TestGenerateCreateTablequery(t *testing.T) {
 	db, mock := MockDB()

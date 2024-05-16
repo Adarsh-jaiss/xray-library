@@ -24,9 +24,6 @@ type Config struct {
 	// ProjectID is the BigQuery project ID.
 	ProjectID string `yaml:"project_id" pflag:",BigQuery project ID"`
 
-	// JSONKeyPath is the path to the BigQuery JSON key file.
-	JSONKeyPath string `yaml:"json_key_path" pflag:",Path to BigQuery JSON key file"`
-
 	// Warehouse is the Snowflake warehouse.
 	Warehouse string `yaml:"warehouse" pflag:",Snowflake warehouse"`
 

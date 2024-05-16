@@ -15,7 +15,6 @@ import (
 const (
 	Redshift_Schema_query = "SHOW COLUMNS FROM TABLE %s.%s.%s;"
 	Redshift_Tables_query = "SELECT * FROM svv_all_tables WHERE database_name = '%s';"
-	
 )
 
 type Redshift struct {
@@ -164,26 +163,26 @@ func (r *Redshift) Execute(query string) ([]byte, error) {
 }
 
 func (r *Redshift) GenerateCreateTableQuery(table types.Table) string {
-    query := fmt.Sprintf("CREATE TABLE %s.%s.%s (", r.Config.DatabaseName, r.Config.Schema, table.Name)
-    for i, column := range table.Columns {
-        colType := strings.ToUpper(column.Type)
-        query += column.Name + " " + colType
-        
-        if column.IsPrimary {
-            query += " PRIMARY KEY"
-            if column.AutoIncrement {
-                query += fmt.Sprintf(" IDENTITY(%v, %v)", column.IdentitySeed, column.IdentityStep)
-            }
-        }
-        
-        if column.IsNullable == "NO" {
-            query += " NOT NULL"
-        }
-        
-        if i < len(table.Columns)-1 {
-            query += ", "
-        }
-    }
-    query += ");"
-    return query
+	query := fmt.Sprintf("CREATE TABLE %s.%s.%s (", r.Config.DatabaseName, r.Config.Schema, table.Name)
+	for i, column := range table.Columns {
+		colType := strings.ToUpper(column.Type)
+		query += column.Name + " " + colType
+
+		if column.IsPrimary {
+			query += " PRIMARY KEY"
+			if column.AutoIncrement {
+				query += fmt.Sprintf(" IDENTITY(%v, %v)", column.IdentitySeed, column.IdentityStep)
+			}
+		}
+
+		if column.IsNullable == "NO" {
+			query += " NOT NULL"
+		}
+
+		if i < len(table.Columns)-1 {
+			query += ", "
+		}
+	}
+	query += ");"
+	return query
 }
