@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -98,7 +98,7 @@ var shellCmd = &cobra.Command{
 	Short: "Interact with databases",
 	Run: func(cmd *cobra.Command, args []string) {
 		if !verbose {
-			logrus.SetOutput(ioutil.Discard)
+			logrus.SetOutput(io.Discard)
 		} else {
 			logrus.SetLevel(logrus.InfoLevel)
 		}
@@ -109,7 +109,7 @@ var shellCmd = &cobra.Command{
 		}
 
 		// Read the YAML file
-		configData, err := ioutil.ReadFile(cfgFile)
+		configData, err := os.ReadFile(cfgFile)
 		if err != nil {
 			fmt.Printf("Error: Failed to read YAML file: %v\n", err)
 			return

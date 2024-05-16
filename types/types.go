@@ -52,6 +52,8 @@ type Column struct {
 	ScopeName              sql.NullString `json:"scope_name"`               // ScopeName is the scope name of the column.
 	ScopeSchema            sql.NullString `json:"scope_schema"`             // ScopeSchema is the scope schema of the column.
 	OrdinalPosition        sql.NullInt64  `json:"ordinal_position"`         // OrdinalPosition is the position of the column in the table.
+	IdentitySeed           sql.NullInt64  `json:"identity_seed"`            // IdentitySeed is the seed value of the identity column.
+	IdentityStep           sql.NullInt64  `json:"identity_step"`            // IdentityStep is the step value of the identity column.
 }
 
 // QueryResult represents the result of a database query.
@@ -83,5 +85,3 @@ func (w DbType) String() string {
 func (w DbType) Index() int {
 	return int(w)
 }
-
-

@@ -157,9 +157,9 @@ func TestGenerateCreateTablequery(t *testing.T) {
 	fmt.Printf("Create table query: %s\n", query)
 
 	expectedQuery := "CREATE TABLE user (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT)"
-    if query != expectedQuery {
-        t.Errorf("Expected '%s', but got '%s'", expectedQuery, query)
-    }
+	if query != expectedQuery {
+		t.Errorf("Expected '%s', but got '%s'", expectedQuery, query)
+	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)

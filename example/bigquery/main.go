@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/thesaas-company/xray"
@@ -9,11 +8,11 @@ import (
 	"github.com/thesaas-company/xray/types"
 )
 
+// export GOOGLE_APPLICATION_CREDENTIALS=path/to/secret.json
 func main() {
 	config := &config.Config{
 		ProjectID:    "ProjectID",
-		JSONKeyPath:  "/JSONKeyPath",
-		DatabaseName: "Database_Name",
+		DatabaseName: "DatabaseName",
 	}
 
 	client, err := xray.NewClientWithConfig(config, types.BigQuery)
@@ -23,34 +22,22 @@ func main() {
 	fmt.Println("Connected to database")
 
 	table := types.Table{
-		Name: "user",
+		Dataset: config.DatabaseName,
+		Name:    "table",
 		Columns: []types.Column{
-			{
-				Name:         "id",
-				Type:         "int",
-				IsNullable:   "NO",
-				DefaultValue: sql.NullString{String: "", Valid: false},
-				IsPrimary:    true,
-				IsUnique:     sql.NullString{String: "YES", Valid: true},
-			},
-			{
-				Name:         "name",
-				Type:         "varchar(255)",
-				IsNullable:   "NO",
-				DefaultValue: sql.NullString{String: "", Valid: false},
-				IsPrimary:    false,
-				IsUnique:     sql.NullString{String: "NO", Valid: true},
-			},
-			{
-				Name:       "age",
-				Type:       "int",
-				IsNullable: "YES",
-			},
+			{Name: "id", Type: "INT64", IsPrimary: true},
+			{Name: "name", Type: "STRING"},
+			{Name: "created_at", Type: "TIMESTAMP"},
 		},
 	}
 
 	query := client.GenerateCreateTableQuery(table)
 	fmt.Println(query)
+	res, err := client.Execute(query)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(res)
 
 	tables, err := client.Tables(config.DatabaseName)
 	if err != nil {

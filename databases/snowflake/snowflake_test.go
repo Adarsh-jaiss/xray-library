@@ -16,7 +16,7 @@ import (
 func MockDB() (*sql.DB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		panic("An error occured while creating a new mock database connection")
+		panic("An error occurred while creating a new mock database connection")
 	}
 
 	return db, mock

@@ -12,13 +12,9 @@ import (
 func main() {
 	// Define the configuration for the Redshift instance
 	cfg := &config.Config{
-		AWS: config.AWS{
-			Region:          "us-west-2",
-			AccessKey:       "access_key",
-			SecretAccessKey: "secret_access",
-		},
-		DatabaseName: "my-database",
-		Schema:       "my-schema",
+		Region:     "my-region-us-west-2",
+		AccountID:  "123456789012",
+		SecretName: "my-secret",
 	}
 
 	// Create a new Redshift instance

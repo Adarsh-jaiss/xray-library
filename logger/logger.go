@@ -93,7 +93,7 @@ func (l *Logger) GenerateCreateTableQuery(table types.Table) string {
 	defer func(start time.Time) {
 		// Log the execution time
 		logrus.WithFields(logrus.Fields{
-			"table_name":           table.Name,
+			"table_name":            table.Name,
 			"Method_Execution_time": time.Since(start),
 		}).Info("Create table query generation completed")
 	}(time.Now())

@@ -68,7 +68,7 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 
 	defer rows.Close()
 
-	// scanning the result into and append it into a varibale
+	// scanning the result into and append it into a variable
 	var columns []types.Column
 	for rows.Next() {
 		var column types.Column
@@ -156,7 +156,7 @@ func (m *MySQL) Tables(databaseName string) ([]string, error) {
 	}
 	defer rows.Close()
 
-	//scan and append the result
+	// scan and append the result
 	var tables []string
 	for rows.Next() {
 		var table string

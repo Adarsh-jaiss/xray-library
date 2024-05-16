@@ -1,28 +1,33 @@
 package bigquery
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
-	"cloud.google.com/go/bigquery"
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
-	"google.golang.org/api/iterator"
-	"google.golang.org/api/option"
+	_ "gorm.io/driver/bigquery/driver"
+)
+
+var GOOGLE_APPLICATION_CREDENTIALS string
+
+const (
+	BigQuery_SCHEMA_QUERY = "SELECT * FROM %s LIMIT 1"
+	BigQuery_TABLES_QUERY = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = '%s'"
 )
 
 // The BigQuery struct is responsible for holding the BigQuery client and configuration.
 type BigQuery struct {
-	Client *bigquery.Client
+	Client *sql.DB
 	Config *config.Config
 }
 
 // NewBigQuery creates a new instance of BigQuery with the provided client.
 // It returns an instance of types.ISQL and an error.
-func NewBigQuery(client *bigquery.Client) (types.ISQL, error) {
+func NewBigQuery(client *sql.DB) (types.ISQL, error) {
 	return &BigQuery{
 		Client: client,
 		Config: &config.Config{},
@@ -31,140 +36,156 @@ func NewBigQuery(client *bigquery.Client) (types.ISQL, error) {
 
 // NewBigQueryWithConfig creates a new instance of BigQuery with the provided configuration.
 func NewBigQueryWithConfig(cfg *config.Config) (types.ISQL, error) {
-	ctx := context.Background()
-	client, err := bigquery.NewClient(ctx, cfg.ProjectID, option.WithCredentialsFile(cfg.JSONKeyPath))
+	if os.Getenv(GOOGLE_APPLICATION_CREDENTIALS) == "" || len(os.Getenv(GOOGLE_APPLICATION_CREDENTIALS)) == 0 {
+		return nil, fmt.Errorf("please set %s env variable for the database", GOOGLE_APPLICATION_CREDENTIALS)
+	}
+	GOOGLE_APPLICATION_CREDENTIALS = os.Getenv(GOOGLE_APPLICATION_CREDENTIALS)
+
+	dbType := types.BigQuery
+	connectionString := fmt.Sprintf("bigquery://%s/%s", cfg.ProjectID, cfg.DatabaseName)
+	db, err := sql.Open(dbType.String(), connectionString)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("database connecetion failed : %v", err)
 	}
 
 	return &BigQuery{
-		Client: client,
+		Client: db,
 		Config: cfg,
 	}, nil
-
 }
 
 // this function extarcts the schema of a table in BigQuery.
 // It takes table name as input and returns a Table struct and an error.
 func (b *BigQuery) Schema(table string) (types.Table, error) {
-	ctx := context.Background()
-	var schema types.Table
 
-	tableRef := b.Client.Dataset(b.Config.DatabaseName).Table(table)
-	schemaInfo, err := tableRef.Metadata(ctx)
+	// execute the sql statement
+	rows, err := b.Client.Query(fmt.Sprintf(BigQuery_SCHEMA_QUERY, table))
 	if err != nil {
-		return types.Table{}, fmt.Errorf("error getting table metadata: %v", err)
+		return types.Table{}, fmt.Errorf("error executing sql statement: %v", err)
 	}
 
-	schema.Name = schemaInfo.Name
-	schema.Description = schemaInfo.Description
-	schema.Columns = make([]types.Column, len(schemaInfo.Schema))
-	for i, fieldSchema := range schemaInfo.Schema {
-		schema.Columns[i] = types.Column{
-			Name:        fieldSchema.Name,
-			Type:        string(fieldSchema.Type),
-			Description: fieldSchema.Description,
-			CharacterMaximumLength: sql.NullInt64{
-				Int64: fieldSchema.MaxLength,
-				Valid: fieldSchema.MaxLength != 0,
-			},
-			DefaultValue: sql.NullString{
-				String: fieldSchema.DefaultValueExpression,
-				Valid:  fieldSchema.DefaultValueExpression != "",
-			},
+	defer rows.Close()
+
+	// scanning the result into and append it into a variable
+	var columns []types.Column
+	columnNames, err := rows.Columns()
+	if err != nil {
+		return types.Table{}, fmt.Errorf("error getting column names: %v", err)
+	}
+	columnTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return types.Table{}, fmt.Errorf("error getting column types: %v", err)
+	}
+	for i, name := range columnNames {
+		var column types.Column
+		column.Name = name
+		column.Type = columnTypes[i].DatabaseTypeName()
+		var ISNullable, _ = columnTypes[i].Nullable()
+		column.IsNullable = fmt.Sprintf("%v", ISNullable)
+		var length int64
+		length, _ = columnTypes[i].Length()
+		column.CharacterMaximumLength = sql.NullInt64{
+			Int64: length,
+			Valid: length != 0,
 		}
+		columns = append(columns, column)
 	}
 
-	fmt.Println(schema)
-	return schema, nil
+	return types.Table{
+		Name:        table,
+		Columns:     columns,
+		Dataset:     b.Config.DatabaseName,
+		ColumnCount: int64(len(columns)),
+	}, nil
+
 }
 
-// Execute executes the given query on BigQuery and returns the query results as JSON.
-// It returns an error if there was an issue running the query or reading the results.
 func (b *BigQuery) Execute(query string) ([]byte, error) {
-	ctx := context.Background()
-	q := b.Client.Query(query)
-
-	exe, err := q.Run(ctx)
+	rows, err := b.Client.Query(query)
 	if err != nil {
-		return nil, fmt.Errorf("error running query")
+		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
 
-	status, err := exe.Wait(ctx)
+	defer rows.Close()
+
+	columns, err := rows.Columns()
 	if err != nil {
-		return nil, fmt.Errorf("error while waiting for query to complete: %v", err)
+		return nil, fmt.Errorf("error getting columns: %v", err)
 	}
 
-	if err := status.Err(); err != nil {
-		return nil, fmt.Errorf("expected nil, found err: %v", err)
-	}
-
-	it, err := exe.Read(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error reading query results: %v", err)
-	}
-
-	var result []map[string]interface{}
-	for {
-		var values map[string]interface{}
-		err := it.Next(&values)
-		if err == iterator.Done {
-			break
+	// Scan the result into a slice of slices
+	var results [][]interface{}
+	for rows.Next() {
+		// create a slice of values and pointers
+		values := make([]interface{}, len(columns))
+		pointers := make([]interface{}, len(columns))
+		for i := range values {
+			//  create a slice of pointers to the values
+			pointers[i] = &values[i]
 		}
-		if err != nil {
+
+		if err := rows.Scan(pointers...); err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
-		result = append(result, values)
+
+		results = append(results, values)
 	}
 
-	// Marshal the rows into JSON
-	jsonData, err := json.Marshal(result)
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	// Convert the result to JSON
+	queryResult := types.QueryResult{
+		Columns: columns,
+		Rows:    results,
+	}
+
+	jsonData, err := json.Marshal(queryResult)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling query results: %v", err)
+		return nil, fmt.Errorf("error marshaling json: %v", err)
 	}
 
 	return jsonData, nil
+
 }
 
 // Tables returns a list of tables in a dataset.
 // It takes a dataset name as input and returns a slice of strings and an error.
-func (b *BigQuery) Tables(Dataset string) ([]string, error) {
-	res := b.Client.Dataset(Dataset).Tables(context.Background())
+
+func (b *BigQuery) Tables(dataset string) ([]string, error) {
+	// res, err := b.Client.Query("SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = '" + Dataset + "'")
+
+	res, err := b.Client.Query(fmt.Sprintf(BigQuery_TABLES_QUERY, dataset))
+	if err != nil {
+		return nil, fmt.Errorf("error executing sql statement: %v", err)
+	}
+	defer res.Close()
+
 	var tables []string
 
-	for {
-		table, err := res.Next()
-		if err == iterator.Done {
-			break
-		}
-
-		if err != nil {
+	for res.Next() {
+		var table string
+		if err := res.Scan(&table); err != nil {
 			return nil, fmt.Errorf("error scanning dataset")
 		}
-		tables = append(tables, table.TableID)
+		tables = append(tables, table)
+	}
+
+	if err := res.Err(); err != nil {
+		return nil, fmt.Errorf("error interating over rows: %v", err)
 	}
 
 	return tables, nil
 }
 
+// GenerateCreateTableQuery generates a CREATE TABLE query for BigQuery.
 func (b *BigQuery) GenerateCreateTableQuery(table types.Table) string {
-
 	query := "CREATE TABLE " + table.Dataset + "." + table.Name + " ("
 	for i, column := range table.Columns {
 		colType := strings.ToUpper(column.Type)
 		query += column.Name + " " + convertTypeToBigQuery(colType)
-
-		if column.IsPrimary {
-			query += " OPTIONS (description = 'Primary key') GENERATED BY DEFAULT AS IDENTITY"
-		}
-
-		if column.DefaultValue.Valid {
-			query += fmt.Sprintf(" OPTIONS (description = 'Default value: %s')", column.DefaultValue.String)
-		}
-
-		if column.IsUnique.String == "YES" && !column.IsPrimary {
-			query += " OPTIONS (description = 'Unique constraint')"
-		}
 
 		if i < len(table.Columns)-1 {
 			query += ", "
