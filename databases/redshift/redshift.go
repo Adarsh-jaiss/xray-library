@@ -1,104 +1,82 @@
 package redshift
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/redshift"
-	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice"
+	_ "github.com/mashiike/redshift-data-sql-driver"
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
 )
 
-// Redshift is a struct that represents a Redshift database.
-type Redshift struct {
-	Client *redshift.Redshift
-	config *config.Config
-}
-
-// Redshift_List_Tables_query is the SQL query used to list all tables in a schema in Redshift.
 const (
-	Redshift_List_Tables_query = "SELECT *FROM svv_all_tables WHERE database_name = 'tickit_db' = '%s';"
-	Redshift_Schema_query      = "SHOW COLUMNS FROM TABLE %s.%s.%s;"
+	Redshift_Schema_query = "SHOW COLUMNS FROM TABLE %s.%s.%s;"
+	Redshift_Tables_query = "SELECT * FROM svv_all_tables WHERE database_name = '%s';"
+	
 )
 
-// NewRedshift creates a new Redshift instance.
-func NewRedshift(client *redshift.Redshift) (types.ISQL, error) {
+type Redshift struct {
+	Client *sql.DB
+	Config config.Config
+}
+
+func NewRedshift(client *sql.DB) (types.ISQL, error) {
 	return &Redshift{
 		Client: client,
-		config: &config.Config{},
+		Config: config.Config{},
 	}, nil
 }
 
-// NewRedshiftWithConfig creates a new Redshift instance with the provided configuration.
 func NewRedshiftWithConfig(cfg *config.Config) (types.ISQL, error) {
-	// Create a new AWS session
-	session, err := session.NewSession(&aws.Config{
-		Region:      aws.String(cfg.AWS.Region),
-		Credentials: credentials.NewStaticCredentials(cfg.AWS.AccessKey, cfg.AWS.SecretAccessKey, ""),
-	})
+
+	dsn := fmt.Sprintf("arn:aws:secretsmanager:%s:%s:secret:%s", cfg.Region, cfg.AccountID, cfg.SecretName)
+	db, err := sql.Open("redshift-data", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("error creating new session: %v", err)
+		return nil, fmt.Errorf("error creating a new session : %v", err)
 	}
 
-	// Create a new Redshift client
-	client := redshift.New(session)
-
-	// Return a new Redshift instance
 	return &Redshift{
-		Client: client,
-		config: cfg,
+		Client: db,
+		Config: *cfg,
 	}, nil
-
 }
 
-func (r *Redshift) RedshiftAPIService(config *config.Config, query string) (*redshiftdataapiservice.RedshiftDataAPIService, *redshiftdataapiservice.ExecuteStatementInput) {
-	// config.AWS.SecretArn = "arn:aws:secretsmanager:us-west-2:123456789012:secret:My	DBSecret-a1b2c3"
-	// config.AWS.ClusterIdentifier = "my-cluster"
-	// config.DatabaseName = "my-database"
-	svc := redshiftdataapiservice.New(session.Must(session.NewSession(&aws.Config{})))
-	input := &redshiftdataapiservice.ExecuteStatementInput{
-		ClusterIdentifier: aws.String(r.config.AWS.ClusterIdentifier),
-		Database:          aws.String(r.config.DatabaseName),
-		SecretArn:         aws.String(r.config.AWS.SecretArn),
-		Sql:               aws.String(query),
-	}
-
-	return svc, input
-}
-
-// Schema returns the schema of a table in Redshift.
-// It takes a table name as input and returns a Table struct and an error.
 func (r *Redshift) Schema(table string) (types.Table, error) {
-	query := fmt.Sprintf(Redshift_Schema_query, r.config.DatabaseName, r.config.Schema, table)
-	svc, input := r.RedshiftAPIService(r.config, query)
-	result, err := svc.ExecuteStatement(input)
-	if err != nil {
-		return types.Table{}, fmt.Errorf("error executing statement: %v", err)
-	}
 
-	getStatementResultInput := &redshiftdataapiservice.GetStatementResultInput{
-		Id: result.Id,
-	}
-
-	getStatementResultOutput, err := svc.GetStatementResult(getStatementResultInput)
+	query := fmt.Sprintf(Redshift_Schema_query, r.Config.DatabaseName, r.Config.Schema, table)
+	ctx := context.Background()
+	rows, err := r.Client.QueryContext(ctx, query)
 	if err != nil {
-		return types.Table{}, fmt.Errorf("error getting statement result: %v", err)
+		return types.Table{}, fmt.Errorf("error executing query: %v", err)
 	}
 
 	var columns []types.Column
-	for _, record := range getStatementResultOutput.Records {
-		for _, field := range record {
-			if field.StringValue != nil {
-				columns = append(columns, types.Column{Name: *field.StringValue})
-
-			}
+	for rows.Next() {
+		var column types.Column
+		if err := rows.Scan(
+			&column.Name,
+			&column.Type,
+			&column.IsNullable,
+			&column.DefaultValue,
+			&column.CharacterMaximumLength,
+			&column.OrdinalPosition,
+			&column.Visibility,
+			&column.IsPrimary,
+			&column.IsUpdatable,
+		); err != nil {
+			return types.Table{}, fmt.Errorf("error scanning rows: %v", err)
 		}
+		column.Metatags = []string{}
+		column.Metatags = append(column.Metatags, column.Name)
+		columns = append(columns, column)
+
+	}
+
+	if err := rows.Err(); err != nil {
+		return types.Table{}, fmt.Errorf("error iterating over rows: %v", err)
 	}
 
 	return types.Table{
@@ -106,96 +84,106 @@ func (r *Redshift) Schema(table string) (types.Table, error) {
 		Columns:     columns,
 		ColumnCount: int64(len(columns)),
 		Description: "",
-		Metatags:    nil,
+		Metatags:    []string{},
 	}, nil
+}
+
+func (r *Redshift) Tables(DatabaseName string) ([]string, error) {
+	ctx := context.Background()
+	query := fmt.Sprintf(Redshift_Tables_query, DatabaseName)
+
+	res, err := r.Client.QueryContext(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query: %v", err)
+	}
+
+	var tables []string
+	for res.Next() {
+		var table string
+		if err := res.Scan(&table); err != nil {
+			return nil, fmt.Errorf("error scanning result: %v", err)
+		}
+		tables = append(tables, table)
+	}
+
+	if err := res.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over result: %v", err)
+	}
+
+	return tables, nil
 
 }
 
-// Execute executes a query on Redshift.
-// It takes a query string as input and returns the result as a JSON byte slice and an error.
 func (r *Redshift) Execute(query string) ([]byte, error) {
-	svc, input := r.RedshiftAPIService(r.config, query) // create a new Redshift API service
-	result, err := svc.ExecuteStatement(input)          // execute the statement
+	ctx := context.Background()
+	rows, err := r.Client.QueryContext(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("error executing statement: %v", err)
+		return nil, fmt.Errorf("error executing query: %v", err)
 	}
 
-	// Get the result
-	getStatementResultInput := &redshiftdataapiservice.GetStatementResultInput{
-		Id: result.Id,
+	// getting the column names
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, fmt.Errorf("error getting columns: %v", err)
 	}
 
-	getStatementResultOutput, err := svc.GetStatementResult(getStatementResultInput)
-	if err != nil {
-		return nil, fmt.Errorf("error getting statement result: %v", err)
+	// Scan the result into a slice of slices
+	var results [][]interface{}
+	for rows.Next() {
+		// create a slice of values and pointers
+		values := make([]interface{}, len(columns))
+		pointers := make([]interface{}, len(columns))
+		for i := range values {
+			//  create a slice of pointers to the values
+			pointers[i] = &values[i]
+		}
+
+		if err := rows.Scan(pointers...); err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		results = append(results, values)
 	}
 
-	// Process the result and convert it to JSON
-	jsonData, err := json.Marshal(getStatementResultOutput)
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows: %v", err)
+	}
+
+	// Convert the result to JSON
+	queryResult := types.QueryResult{
+		Columns: columns,
+		Rows:    results,
+	}
+	jsonData, err := json.Marshal(queryResult)
 	if err != nil {
-		return nil, fmt.Errorf("error converting result to JSON: %v", err)
+		return nil, fmt.Errorf("error marshaling json: %v", err)
 	}
 
 	return jsonData, nil
 }
 
-// Tables returns a list of tables in the specified schema.
-// It takes a schema name as input and returns a slice of strings and an error.
-func (r *Redshift) Tables(DatabaseName string) ([]string, error) {
-	query := fmt.Sprintf(Redshift_List_Tables_query, DatabaseName)
-	svc, input := r.RedshiftAPIService(r.config, query)
-
-	res, err := svc.ExecuteStatement(input)
-	if err != nil {
-		return nil, fmt.Errorf("error executing statement: %v", err)
-	}
-
-	// Get the result
-	getStatementResultInput := &redshiftdataapiservice.GetStatementResultInput{
-		Id: res.Id,
-	}
-
-	getStatementResultOutput, err := svc.GetStatementResult(getStatementResultInput)
-	if err != nil {
-		return nil, fmt.Errorf("error getting statement result: %v", err)
-	}
-
-	var tables []string
-	for _, record := range getStatementResultOutput.Records {
-		for _, field := range record {
-			if field.StringValue != nil {
-				tables = append(tables, *field.StringValue)
-			}
-		}
-	}
-	return tables, nil
-}
-
 func (r *Redshift) GenerateCreateTableQuery(table types.Table) string {
-	query := fmt.Sprintf("CREATE TABLE %s.%s.%s (", r.config.DatabaseName, r.config.Schema, table.Name)
-	for i, column := range table.Columns {
-		colType := strings.ToUpper(column.Type)
-		query += column.Name + " " + colType
-		if column.IsPrimary {
-			query += " PRIMARY KEY"
-		}
-		if column.AutoIncrement {
-			query += " IDENTITY(1,1)"
-		}
-
-		if column.DefaultValue.Valid {
-			query += fmt.Sprintf(" DEFAULT %s", column.DefaultValue.String)
-		}
-		if column.IsUnique.String == "YES" {
-			query += " UNIQUE"
-		}
-		if column.IsNullable == "NO" {
-			query += " NOT NULL"
-		}
-		if i < len(table.Columns)-1 {
-			query += ", "
-		}
-	}
-	query += ");"
-	return query
+    query := fmt.Sprintf("CREATE TABLE %s.%s.%s (", r.Config.DatabaseName, r.Config.Schema, table.Name)
+    for i, column := range table.Columns {
+        colType := strings.ToUpper(column.Type)
+        query += column.Name + " " + colType
+        
+        if column.IsPrimary {
+            query += " PRIMARY KEY"
+            if column.AutoIncrement {
+                query += fmt.Sprintf(" IDENTITY(%v, %v)", column.IdentitySeed, column.IdentityStep)
+            }
+        }
+        
+        if column.IsNullable == "NO" {
+            query += " NOT NULL"
+        }
+        
+        if i < len(table.Columns)-1 {
+            query += ", "
+        }
+    }
+    query += ");"
+    return query
 }
