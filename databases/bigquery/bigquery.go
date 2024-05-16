@@ -154,10 +154,10 @@ func (b *BigQuery) Execute(query string) ([]byte, error) {
 // Tables returns a list of tables in a dataset.
 // It takes a dataset name as input and returns a slice of strings and an error.
 
-func (b *BigQuery) Tables(Dataset string) ([]string, error) {
+func (b *BigQuery) Tables(dataset string) ([]string, error) {
 	// res, err := b.Client.Query("SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = '" + Dataset + "'")
 
-	res, err := b.Client.Query(fmt.Sprintf(BigQuery_TABLES_QUERY, Dataset))
+	res, err := b.Client.Query(fmt.Sprintf(BigQuery_TABLES_QUERY, dataset))
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}

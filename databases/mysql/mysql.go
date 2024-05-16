@@ -156,7 +156,7 @@ func (m *MySQL) Tables(databaseName string) ([]string, error) {
 	}
 	defer rows.Close()
 
-	//scan and append the result
+	// scan and append the result
 	var tables []string
 	for rows.Next() {
 		var table string

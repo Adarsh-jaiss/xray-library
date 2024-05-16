@@ -87,9 +87,9 @@ func (r *Redshift) Schema(table string) (types.Table, error) {
 	}, nil
 }
 
-func (r *Redshift) Tables(DatabaseName string) ([]string, error) {
+func (r *Redshift) Tables(databaseName string) ([]string, error) {
 	ctx := context.Background()
-	query := fmt.Sprintf(Redshift_Tables_query, DatabaseName)
+	query := fmt.Sprintf(Redshift_Tables_query, databaseName)
 
 	res, err := r.Client.QueryContext(ctx, query)
 	if err != nil {

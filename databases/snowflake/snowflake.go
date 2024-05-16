@@ -111,7 +111,7 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 }
 
 // Tables returns a list of tables in a Snowflake database.
-func (s *Snowflake) Tables(DatabaseName string) ([]string, error) {
+func (s *Snowflake) Tables(databaseName string) ([]string, error) {
 	query := fmt.Sprintf("USE WAREHOUSE %s", s.Config.Warehouse)
 
 	_, err := s.Client.Query(query)
