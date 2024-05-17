@@ -81,7 +81,11 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 	if err != nil {
 		return res, fmt.Errorf("error executing sql statement: %v", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	var columns []types.Column
 	for rows.Next() {
@@ -123,7 +127,11 @@ func (s *Snowflake) Tables(databaseName string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement and querying tables list: %v", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	var tables []string
 	for rows.Next() {
@@ -149,7 +157,11 @@ func (s *Snowflake) Execute(query string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	columns, err := rows.Columns()
 	if err != nil {

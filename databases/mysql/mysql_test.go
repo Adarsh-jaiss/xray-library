@@ -26,7 +26,11 @@ func MockDB() (*sql.DB, sqlmock.Sqlmock) {
 // It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestSchema(t *testing.T) {
 	db, mock := MockDB() // create a new mock database connection
-	defer db.Close()     // close the connection when the function returns
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}() // close the connection when the function returns
 
 	tableName := "user"                                                                                                                               // table name to be used in the test
 	mockRows := sqlmock.NewRows([]string{"Field", "Type", "Null", "Key", "Default", "Extra"}).AddRow("id", "int", "NO", "PRI", nil, "auto_increment") // mock rows to be returned by the query
@@ -58,7 +62,11 @@ func TestSchema(t *testing.T) {
 func TestExecute(t *testing.T) {
 	// create a new mock database connection
 	db, mock := MockDB()
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	// query to be executed
 	query := `SELECT id,name FROM user`
@@ -93,7 +101,11 @@ func TestExecute(t *testing.T) {
 func TestGetTableName(t *testing.T) {
 	// create a new mock database connection
 	db, mock := MockDB()
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	tableList := []string{"user", "product", "order"} // list of tables to be returned by the query
 
@@ -122,7 +134,11 @@ func TestGetTableName(t *testing.T) {
 
 func TestGenerateCreateTablequery(t *testing.T) {
 	db, mock := MockDB()
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	table := types.Table{
 		Name: "user",

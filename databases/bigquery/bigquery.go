@@ -64,7 +64,11 @@ func (b *BigQuery) Schema(table string) (types.Table, error) {
 		return types.Table{}, fmt.Errorf("error executing sql statement: %v", err)
 	}
 
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	// scanning the result into and append it into a variable
 	var columns []types.Column
@@ -106,7 +110,11 @@ func (b *BigQuery) Execute(query string) ([]byte, error) {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
 
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	columns, err := rows.Columns()
 	if err != nil {
@@ -157,23 +165,27 @@ func (b *BigQuery) Execute(query string) ([]byte, error) {
 func (b *BigQuery) Tables(dataset string) ([]string, error) {
 	// res, err := b.Client.Query("SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = '" + Dataset + "'")
 
-	res, err := b.Client.Query(fmt.Sprintf(BigQuery_TABLES_QUERY, dataset))
+	rows, err := b.Client.Query(fmt.Sprintf(BigQuery_TABLES_QUERY, dataset))
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
 	}
-	defer res.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	var tables []string
 
-	for res.Next() {
+	for rows.Next() {
 		var table string
-		if err := res.Scan(&table); err != nil {
+		if err := rows.Scan(&table); err != nil {
 			return nil, fmt.Errorf("error scanning dataset")
 		}
 		tables = append(tables, table)
 	}
 
-	if err := res.Err(); err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error interating over rows: %v", err)
 	}
 

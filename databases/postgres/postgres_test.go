@@ -30,7 +30,11 @@ func MockDB() (*sql.DB, sqlmock.Sqlmock) {
 func TestSchema(t *testing.T) {
 	// create a new mock database connection
 	db, mock := MockDB()
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	table_name := "user" // table name to be used in the test
 
@@ -63,7 +67,11 @@ func TestSchema(t *testing.T) {
 func TestExecute(t *testing.T) {
 	// create a new mock database connection
 	db, mock := MockDB()
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	//	we then create a new instance of our Postgres object and test the function
 	query := `SELECT id, name FROM user`
@@ -98,7 +106,11 @@ func TestExecute(t *testing.T) {
 // It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestGetTableName(t *testing.T) {
 	db, mock := MockDB() // create a new mock database connection
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	tableList := []string{"user", "Credit", "Debit"} // list of tables to be used in the test
 	DatabaseName := "test"
@@ -129,7 +141,11 @@ func TestGetTableName(t *testing.T) {
 
 func TestGenerateCreateTablequery(t *testing.T) {
 	db, mock := MockDB()
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	table := types.Table{
 		Name: "user",
