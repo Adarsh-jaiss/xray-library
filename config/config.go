@@ -28,7 +28,7 @@ type Config struct {
 	Warehouse string `yaml:"warehouse" pflag:",Snowflake warehouse"`
 
 	// Schema is the Snowflake database schema.
-	Schema string `yaml:"schema" pflag:",Snowflake database schema"`
+	Schema string `yaml:"schema" pflag:",Snowflake/redshift database schema"`
 
 	// Account is the Snowflake account ID.
 	Account string `yaml:"account" pflag:",Snowflake account ID"`

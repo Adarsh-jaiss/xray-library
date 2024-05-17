@@ -5,18 +5,19 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
+
 	_ "github.com/lib/pq"
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
-	"os"
-	"strings"
 )
 
 var DB_PASSWORD = "DB_PASSWORD"
 
 const (
 	Redshift_Schema_query = `SELECT "column", type, encoding, distkey, sortkey, "notnull"  FROM pg_table_def WHERE schemaname = '%s' AND tablename = '%s';`
-	Redshift_Tables_query = "SELECT datname as Database FROM %s;"
+	Redshift_Tables_query = "SHOW TABLES FROM SCHEMA %s.public;"
 )
 
 type Redshift struct {
@@ -50,64 +51,80 @@ func NewRedshiftWithConfig(cfg *config.Config) (types.ISQL, error) {
 }
 
 func (r *Redshift) Schema(table string) (types.Table, error) {
-    query := fmt.Sprintf(Redshift_Schema_query, r.Config.Schema, table)
-    ctx := context.Background()
-    rows, err := r.Client.QueryContext(ctx, query)
-    if err != nil {
-        return types.Table{}, fmt.Errorf("error executing query: %v", err)
-    }
+	if len(r.Config.Schema) == 0 {
+		r.Config.Schema = "public"
+	}
 
-    var columns []types.Column
-    for rows.Next() {
-        var column types.Column
-        var encoding string
-        var distkey bool
-        var sortkey int
-        var notnull bool
-        if err := rows.Scan(
-            &column.Name,
-            &column.Type,
-            &encoding,
-            &distkey,
-            &sortkey,
-            &notnull,
-        ); err != nil {
-            return types.Table{}, fmt.Errorf("error scanning rows: %v", err)
-        }
-        column.Metatags = []string{encoding, fmt.Sprintf("distkey:%v", distkey), fmt.Sprintf("sortkey:%d", sortkey), fmt.Sprintf("notnull:%v", notnull)}
-        columns = append(columns, column)
-    }
+	query := fmt.Sprintf(Redshift_Schema_query, r.Config.Schema, table)
+	ctx := context.Background()
+	rows, err := r.Client.QueryContext(ctx, query)
+	if err != nil {
+		return types.Table{}, fmt.Errorf("error executing query: %v", err)
+	}
 
-    if err := rows.Err(); err != nil {
-        return types.Table{}, fmt.Errorf("error iterating over rows: %v", err)
-    }
+	var columns []types.Column
+	for rows.Next() {
+		var column types.Column
+		var encoding string
+		var distkey bool
+		var sortkey int
+		var notnull bool
+		if err := rows.Scan(
+			&column.Name,
+			&column.Type,
+			&encoding,
+			&distkey,
+			&sortkey,
+			&notnull,
+		); err != nil {
+			return types.Table{}, fmt.Errorf("error scanning rows: %v", err)
+		}
+		column.Metatags = []string{encoding, fmt.Sprintf("distkey:%v", distkey), fmt.Sprintf("sortkey:%d", sortkey), fmt.Sprintf("notnull:%v", notnull)}
+		columns = append(columns, column)
+	}
 
-    return types.Table{
-        Name:        table,
-        Columns:     columns,
-        ColumnCount: int64(len(columns)),
-        Description: "",
-        Metatags:    []string{},
-    }, nil
+	if err := rows.Err(); err != nil {
+		return types.Table{}, fmt.Errorf("error iterating over rows: %v", err)
+	}
+
+	return types.Table{
+		Name:        table,
+		Columns:     columns,
+		ColumnCount: int64(len(columns)),
+		Description: "",
+		Metatags:    []string{},
+	}, nil
+}
+
+type TableResponse struct {
+	TableName    string
+	DatabaseName string
+	SchemaName   string
+	TableType    string
+	TableAcl     sql.NullString
+	Remarks      sql.NullString
 }
 
 func (r *Redshift) Tables(databaseName string) ([]string, error) {
-	ctx := context.Background()
+	// ctx := context.Background()
 	query := fmt.Sprintf(Redshift_Tables_query, databaseName)
 
-	res, err := r.Client.QueryContext(ctx, query)
+	res, err := r.Client.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error executing query: %v", err)
 	}
 
 	var tables []string
+
 	for res.Next() {
-		var table string
-		if err := res.Scan(&table); err != nil {
+		var table TableResponse
+		if err := res.Scan(&table.DatabaseName, &table.SchemaName, &table.TableName, &table.TableType, &table.TableAcl, &table.Remarks); err != nil {
 			return nil, fmt.Errorf("error scanning result: %v", err)
 		}
-		tables = append(tables, table)
+		fmt.Println(table)
+		tables = append(tables, table.TableName)
 	}
+	fmt.Println(tables)
 
 	if err := res.Err(); err != nil {
 		return nil, fmt.Errorf("error iterating over result: %v", err)
