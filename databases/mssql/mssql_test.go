@@ -31,7 +31,7 @@ func TestSchema(t *testing.T) {
 		}
 	}() // close the connection when the function returns
 
-	tableName := "user"                                                                  
+	tableName := "user"
 	mockRows := sqlmock.NewRows([]string{"Field", "Type", "IsNullable", "ColumnDefault", "OrdinalPosition", "CharacterMaximumLength"}).AddRow("id", "int", "true", "", 1, nil)
 
 	mock.ExpectQuery(regexp.QuoteMeta(fmt.Sprintf(MSSQL_SCHEMA_QUERY, tableName))).WillReturnRows(mockRows) // set the expected return values for the query
@@ -88,7 +88,6 @@ func TestTables(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
-
 
 func TestGenerateCreateTablequery(t *testing.T) {
 	db, mock := MockDB()

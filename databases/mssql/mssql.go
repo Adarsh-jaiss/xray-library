@@ -67,12 +67,12 @@ func (m *MSSQL) Schema(table string) (types.Table, error) {
 	for rows.Next() {
 		var col types.Column
 		if err := rows.Scan(
-			&col.Name, 
-			&col.Type, 
-			&col.IsNullable, 
-			&col.ColumnDefault, 
-			&col.OrdinalPosition, 
-			&col.CharacterMaximumLength, 
+			&col.Name,
+			&col.Type,
+			&col.IsNullable,
+			&col.ColumnDefault,
+			&col.OrdinalPosition,
+			&col.CharacterMaximumLength,
 		); err != nil {
 			return types.Table{}, fmt.Errorf("error scanning rows : %v", err)
 		}
@@ -175,31 +175,31 @@ func (m *MSSQL) Execute(query string) ([]byte, error) {
 }
 
 func (m *MSSQL) GenerateCreateTableQuery(table types.Table) string {
-    query := "CREATE TABLE [" + table.Name + "] ("
-    pk := ""
-    unique := ""
-    for i, column := range table.Columns {
-        colType := strings.ToUpper(column.Type)
-        query += "[" + column.Name + "] " + colType
-        if column.AutoIncrement {
-            query += " IDENTITY(1,1)"
-        }
-        if column.IsPrimary {
-            pk = " PRIMARY KEY ([" + column.Name + "])"
-        }
-        if column.DefaultValue.Valid {
-            query += " DEFAULT (" + column.DefaultValue.String + ")"
-        }
-        if column.IsUnique.String == "YES" && !column.IsPrimary {
-            unique = ", UNIQUE ([" + column.Name + "])"
-        }
-        if column.IsNullable == "NO" && !column.IsPrimary {
-            query += " NOT NULL"
-        }
-        if i < len(table.Columns)-1 {
-            query += ", "
-        }
-    }
-    query += pk + unique + ")"
-    return query
+	query := "CREATE TABLE [" + table.Name + "] ("
+	pk := ""
+	unique := ""
+	for i, column := range table.Columns {
+		colType := strings.ToUpper(column.Type)
+		query += "[" + column.Name + "] " + colType
+		if column.AutoIncrement {
+			query += " IDENTITY(1,1)"
+		}
+		if column.IsPrimary {
+			pk = " PRIMARY KEY ([" + column.Name + "])"
+		}
+		if column.DefaultValue.Valid {
+			query += " DEFAULT (" + column.DefaultValue.String + ")"
+		}
+		if column.IsUnique.String == "YES" && !column.IsPrimary {
+			unique = ", UNIQUE ([" + column.Name + "])"
+		}
+		if column.IsNullable == "NO" && !column.IsPrimary {
+			query += " NOT NULL"
+		}
+		if i < len(table.Columns)-1 {
+			query += ", "
+		}
+	}
+	query += pk + unique + ")"
+	return query
 }
