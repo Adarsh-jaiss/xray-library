@@ -12,9 +12,11 @@ import (
 func main() {
 	// Define the configuration for the Redshift instance
 	cfg := &config.Config{
-		Region:     "my-region-us-west-2",
-		AccountID:  "123456789012",
-		SecretName: "my-secret",
+		Host:         "default-workgroup.609973658768.ap-south-1.redshift-serverless.amazonaws.com",
+		DatabaseName: "dev",
+		Username:     "admin",
+		Port:         "5439",
+		SSL:          "require",
 	}
 
 	// Create a new Redshift instance
@@ -54,7 +56,7 @@ func main() {
 	res := rs.GenerateCreateTableQuery(table)
 	fmt.Println(res)
 
-	query := "SELECT * FROM my_table"
+	query := "SELECT * FROM sales limit 10"
 	result, err := rs.Execute(query)
 	if err != nil {
 		fmt.Printf("Error executing query: %v\n", err)

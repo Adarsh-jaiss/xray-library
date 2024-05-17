@@ -5,12 +5,16 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
-	_ "github.com/mashiike/redshift-data-sql-driver"
+	_ "github.com/lib/pq"
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
 )
+
+// DB_PASSWORD is the environment variable that holds the database password.
+var DB_PASSWORD = "DB_PASSWORD"
 
 const (
 	Redshift_Schema_query = "SHOW COLUMNS FROM TABLE %s.%s.%s;"
@@ -30,9 +34,12 @@ func NewRedshift(client *sql.DB) (types.ISQL, error) {
 }
 
 func NewRedshiftWithConfig(cfg *config.Config) (types.ISQL, error) {
+	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 {
+		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
+	}
+	DB_PASSWORD = os.Getenv(DB_PASSWORD)
 
-	dsn := fmt.Sprintf("arn:aws:secretsmanager:%s:%s:secret:%s", cfg.Region, cfg.AccountID, cfg.SecretName)
-	db, err := sql.Open("redshift-data", dsn)
+	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", cfg.Host, cfg.Port, cfg.Username, DB_PASSWORD, cfg.DatabaseName, cfg.SSL))
 	if err != nil {
 		return nil, fmt.Errorf("error creating a new session : %v", err)
 	}
