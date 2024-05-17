@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/thesaas-company/xray"
 	"github.com/thesaas-company/xray/config"
-	"github.com/thesaas-company/xray/databases/redshift"
 	"github.com/thesaas-company/xray/types"
 )
 
@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// Create a new Redshift instance
-	rs, err := redshift.NewRedshiftWithConfig(cfg)
+	rs, err := xray.NewClientWithConfig(cfg,types.Redshift)
 	if err != nil {
 		fmt.Printf("Error creating Redshift instance: %v\n", err)
 		return
