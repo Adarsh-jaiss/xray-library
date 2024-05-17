@@ -27,7 +27,11 @@ func MockDB() (*sql.DB, sqlmock.Sqlmock) {
 // It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestSchema(t *testing.T) {
 	db, mock := MockDB() // create a new mock database connection
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	table_name := "user"
 
@@ -61,7 +65,11 @@ func TestSchema(t *testing.T) {
 func TestExecute(t *testing.T) {
 	// create a new mock database connection
 	db, mock := MockDB()
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	query := `SELECT id, name FROM "user"`
 	mockRows := sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "Rohan") // mock rows to be returned by the query
@@ -94,7 +102,11 @@ func TestExecute(t *testing.T) {
 func TestTables(t *testing.T) {
 	// create a new mock database connection
 	db, mock := MockDB()
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	tableList := []string{"user", "product", "order"}
 	Warehouse := "datasherlock"
@@ -135,7 +147,11 @@ func TestTables(t *testing.T) {
 
 func TestGenerateCreateTableQuery(t *testing.T) {
 	db, mock := MockDB()
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 	table := types.Table{
 		Name: "user",
