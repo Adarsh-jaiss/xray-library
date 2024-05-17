@@ -6,6 +6,7 @@ import (
 
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/databases/bigquery"
+	"github.com/thesaas-company/xray/databases/mssql"
 
 	"github.com/thesaas-company/xray/databases/mysql"
 	"github.com/thesaas-company/xray/databases/postgres"
@@ -49,6 +50,12 @@ func NewClientWithConfig(dbConfig *config.Config, dbType types.DbType) (types.IS
 			return nil, err
 		}
 		return logger.NewLogger(redshiftClient), nil
+	case types.MSSQL:
+		mssqlClient, err := mssql.NewMSSQLFromConfig(dbConfig)
+		if err != nil {
+			return nil, err
+		}
+		return logger.NewLogger(mssqlClient), nil
 
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", dbType)
@@ -90,6 +97,12 @@ func NewClient(dbClient *sql.DB, dbType types.DbType) (types.ISQL, error) {
 			return nil, err
 		}
 		return logger.NewLogger(redshiftClient), nil
+	case types.MSSQL:
+		mssqlClient, err := mssql.NewMSSQL(dbClient)
+		if err != nil {
+			return nil, err
+		}
+		return logger.NewLogger(mssqlClient), nil
 	default:
 		return nil, fmt.Errorf("unsupported database type: %s", dbType)
 	}
