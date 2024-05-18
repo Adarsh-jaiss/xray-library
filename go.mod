@@ -4,6 +4,7 @@ go 1.22
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
+	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/lib/pq v1.10.9
 	github.com/sirupsen/logrus v1.9.3
@@ -53,6 +54,8 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
+	github.com/golang-sql/civil v0.0.0-20190719163853-cb61b32ac6fe // indirect
+	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/flatbuffers v23.5.26+incompatible // indirect
