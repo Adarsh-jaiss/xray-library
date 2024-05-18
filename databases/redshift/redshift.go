@@ -13,18 +13,23 @@ import (
 	"github.com/thesaas-company/xray/types"
 )
 
+// DB_PASSWORD is the environment variable that holds the database password.
 var DB_PASSWORD = "DB_PASSWORD"
 
+// Redshift_Schema_query is the SQL query used to describe a table schema in Redshift.
+// Redshift_Tables_query is the SQL query used to list all tables in a schema in Redshift.
 const (
 	Redshift_Schema_query = `SELECT "column", type, encoding, distkey, sortkey, "notnull"  FROM pg_table_def WHERE schemaname = '%s' AND tablename = '%s';`
 	Redshift_Tables_query = "SHOW TABLES FROM SCHEMA %s.public;"
 )
 
+// Redshift is a Redshift implementation of the ISQL interface.
 type Redshift struct {
 	Client *sql.DB
 	Config config.Config
 }
 
+// NewRedshift creates a new Redshift client with the given sql.DB.
 func NewRedshift(client *sql.DB) (types.ISQL, error) {
 	return &Redshift{
 		Client: client,
@@ -32,6 +37,9 @@ func NewRedshift(client *sql.DB) (types.ISQL, error) {
 	}, nil
 }
 
+// NewRedshiftWithConfig creates a new Redshift client with the given configuration.
+// It returns an error if the DB_PASSWORD environment variable is not set.
+// It uses the postgres driver to connect to the database.
 func NewRedshiftWithConfig(cfg *config.Config) (types.ISQL, error) {
 	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 {
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
@@ -50,6 +58,8 @@ func NewRedshiftWithConfig(cfg *config.Config) (types.ISQL, error) {
 	}, nil
 }
 
+// Schema returns the schema of a table in Redshift.
+// It takes the table name as an argument and returns a Table struct and an error.
 func (r *Redshift) Schema(table string) (types.Table, error) {
 	if len(r.Config.Schema) == 0 {
 		r.Config.Schema = "public"
@@ -96,15 +106,6 @@ func (r *Redshift) Schema(table string) (types.Table, error) {
 	}, nil
 }
 
-type TableResponse struct {
-	TableName    string
-	DatabaseName string
-	SchemaName   string
-	TableType    string
-	TableAcl     sql.NullString
-	Remarks      sql.NullString
-}
-
 func (r *Redshift) Tables(databaseName string) ([]string, error) {
 	// ctx := context.Background()
 	query := fmt.Sprintf(Redshift_Tables_query, databaseName)
@@ -117,7 +118,7 @@ func (r *Redshift) Tables(databaseName string) ([]string, error) {
 	var tables []string
 
 	for res.Next() {
-		var table TableResponse
+		var table types.TableResponse
 		if err := res.Scan(&table.DatabaseName, &table.SchemaName, &table.TableName, &table.TableType, &table.TableAcl, &table.Remarks); err != nil {
 			return nil, fmt.Errorf("error scanning result: %v", err)
 		}
@@ -134,6 +135,8 @@ func (r *Redshift) Tables(databaseName string) ([]string, error) {
 
 }
 
+// Execute executes a query on Redshift.
+// It takes a query string as input and returns the result as a byte slice and an error.
 func (r *Redshift) Execute(query string) ([]byte, error) {
 	ctx := context.Background()
 	rows, err := r.Client.QueryContext(ctx, query)
@@ -183,6 +186,8 @@ func (r *Redshift) Execute(query string) ([]byte, error) {
 	return jsonData, nil
 }
 
+// GenerateCreateTableQuery generates a CREATE TABLE query for Redshift.
+// It takes a Table struct as an argument and returns a string.
 func (r *Redshift) GenerateCreateTableQuery(table types.Table) string {
 	query := fmt.Sprintf("CREATE TABLE %s.%s.%s (", r.Config.DatabaseName, r.Config.Schema, table.Name)
 	for i, column := range table.Columns {

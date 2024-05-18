@@ -104,7 +104,7 @@ func TestExecute(t *testing.T) {
 // TestGetTableName is a unit test function that tests the Tables method of the Postgres struct.
 // It creates a mock instance of Postgres, sets the expected return values, and calls the method under test.
 // It then asserts the expected return values and checks if the method was called with the correct arguments.
-func TestGetTableName(t *testing.T) {
+func TestTables(t *testing.T) {
 	db, mock := MockDB() // create a new mock database connection
 	defer func() {
 		if err := db.Close(); err != nil {
@@ -139,6 +139,9 @@ func TestGetTableName(t *testing.T) {
 	}
 }
 
+// TestGenerateCreateTablequery is a unit test function that tests the GenerateCreateTableQuery method of the Postgres struct.
+// It creates a mock instance of Postgres, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestGenerateCreateTablequery(t *testing.T) {
 	db, mock := MockDB()
 	defer func() {

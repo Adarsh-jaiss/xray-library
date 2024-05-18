@@ -23,6 +23,9 @@ func MockDB() (*sql.DB, sqlmock.Sqlmock) {
 	return db, mock
 }
 
+// TestSchema is a unit test function that tests the Schema method of the mssql
+// It creates a mock instance of mssql, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestSchema(t *testing.T) {
 	db, mock := MockDB() // create a new mock database connection
 	defer func() {
@@ -55,6 +58,9 @@ func TestSchema(t *testing.T) {
 
 }
 
+// TestTables is a unit test function that tests the Tables method of the mssql
+// It creates a mock instance of mssql, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestTables(t *testing.T) {
 	// create a new mock database connection
 	db, mock := MockDB()
@@ -89,6 +95,48 @@ func TestTables(t *testing.T) {
 	}
 }
 
+// TestExecute is a unit test function that tests the Execute method of the mssql
+// It creates a mock instance of mssql, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
+func TestExecute(t *testing.T) {
+	// create a new mock database connection
+	db, mock := MockDB()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Println("Failed to close rows:", err)
+		}
+	}()
+
+	// query to be executed
+	query := `SELECT id,name FROM user`
+	mockRows := sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "John") // mock rows to be returned by the query
+
+	mock.ExpectQuery(query).WillReturnRows(mockRows) // set the expected return values for the query
+
+	m, err := NewMSSQL(db) // create a new instance of our MySQL object
+	if err != nil {
+		t.Errorf("error executing query: %s", err)
+	}
+	res, err := m.Execute(regexp.QuoteMeta(query)) // call the Execute method
+	if err != nil {
+		t.Errorf("error executing the query: %s", err)
+	}
+
+	var result types.QueryResult
+	if err := json.Unmarshal(res, &result); err != nil {
+		t.Errorf("error unmarshalling the result: %s", err)
+	}
+
+	fmt.Printf("Query result: %+v\n", result)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+}
+
+// TestGenerateCreateTablequery is a unit test function that tests the GenerateCreateTableQuery method of the mssql
+// It creates a mock instance of mssql, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestGenerateCreateTablequery(t *testing.T) {
 	db, mock := MockDB()
 	defer func() {
@@ -134,42 +182,6 @@ func TestGenerateCreateTablequery(t *testing.T) {
 		t.Errorf("Expected '%s', but got '%s'", expectedQuery, query)
 	}
 
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
-
-}
-
-func TestExecute(t *testing.T) {
-	// create a new mock database connection
-	db, mock := MockDB()
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Println("Failed to close rows:", err)
-		}
-	}()
-
-	// query to be executed
-	query := `SELECT id,name FROM user`
-	mockRows := sqlmock.NewRows([]string{"id", "name"}).AddRow(1, "John") // mock rows to be returned by the query
-
-	mock.ExpectQuery(query).WillReturnRows(mockRows) // set the expected return values for the query
-
-	m, err := NewMSSQL(db) // create a new instance of our MySQL object
-	if err != nil {
-		t.Errorf("error executing query: %s", err)
-	}
-	res, err := m.Execute(regexp.QuoteMeta(query)) // call the Execute method
-	if err != nil {
-		t.Errorf("error executing the query: %s", err)
-	}
-
-	var result types.QueryResult
-	if err := json.Unmarshal(res, &result); err != nil {
-		t.Errorf("error unmarshalling the result: %s", err)
-	}
-
-	fmt.Printf("Query result: %+v\n", result)
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}

@@ -33,7 +33,7 @@ Set the password in an environment variable for easier configuration:
 
 - Ensure you have Xray installed and imported in your Go application.
 
-- Checkout [Integration.md](https://github.com/thesaas-company/xray/tree/main/example/postgres/integration.md) for a code sample demonstrating how to connect to Postgres using Xray.
+- Checkout [Integration.md](https://github.com/thesaas-company/xray/tree/main/example/postgres/integration.md) for a detailed doc and [main.go](https://github.com/thesaas-company/xray/tree/main/example/postgres/main.go) for code sample, demonstrating how to connect to Postgres using Xray.
 
 - Once you have the code, run the following commands:
   

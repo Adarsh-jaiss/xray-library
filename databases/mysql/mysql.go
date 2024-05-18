@@ -56,7 +56,8 @@ func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 
 }
 
-// This method will accept a table name as input and return the table schema (structure).
+// Schema retrieves the table schema for the given table name.
+// It takes the table name as an argument and returns the table schema as a types.Table object.
 func (m *MySQL) Schema(table string) (types.Table, error) {
 	var response types.Table
 
@@ -100,7 +101,8 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 	}, nil
 }
 
-// Execute a database query and return the result in JSON format
+// Execute executes the given SQL query and returns the result as JSON.
+// It takes the SQL query as an argument.
 func (m *MySQL) Execute(query string) ([]byte, error) {
 
 	// execute the sql statement
@@ -154,7 +156,8 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 	return jsonData, nil
 }
 
-// Retrieve the names of tables in the specified database.
+// Tables retrieves the list of tables in the given database.
+// It takes the database name as an argument and returns a list of table names.
 func (m *MySQL) Tables(databaseName string) ([]string, error) {
 
 	// execute the sql statement

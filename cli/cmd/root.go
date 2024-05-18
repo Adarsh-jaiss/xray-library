@@ -17,12 +17,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Command line flags
 var (
 	verbose bool
 	cfgFile string
 	dbType  string
 )
 
+// QueryResult represents the result of a database query.
 type QueryResult struct {
 	Columns []string        `json:"columns"`
 	Rows    [][]interface{} `json:"rows"`
@@ -30,19 +32,23 @@ type QueryResult struct {
 	Error   string          `json:"error"`
 }
 
+// Table represents a table with headers and rows.
 type Table struct {
 	headers []string
 	rows    [][]string
 }
 
+// NewTable creates a new Table with the given headers.
 func NewTable(headers []string) *Table {
 	return &Table{headers: headers}
 }
 
+// AddRow adds a row to the table.
 func (t *Table) AddRow(row []string) {
 	t.rows = append(t.rows, row)
 }
 
+// String returns a string representation of the table.
 func (t *Table) String() string {
 	// Find the maximum width of each column
 	columnWidths := make([]int, len(t.headers))
@@ -84,6 +90,7 @@ func (t *Table) String() string {
 	return result.String()
 }
 
+// toInterfaceSlice converts a slice of strings to a slice of interfaces.
 func toInterfaceSlice(strs []string) []interface{} {
 	result := make([]interface{}, len(strs))
 	for i, s := range strs {
@@ -97,6 +104,7 @@ var shellCmd = &cobra.Command{
 	Use:   "shell",
 	Short: "Interact with databases",
 	Run: func(cmd *cobra.Command, args []string) {
+		// Set up logging
 		if !verbose {
 			logrus.SetOutput(io.Discard)
 		} else {
@@ -114,7 +122,6 @@ var shellCmd = &cobra.Command{
 			fmt.Printf("Error: Failed to read YAML file: %v\n", err)
 			return
 		}
-
 		var cfg config.Config
 		err = yaml.Unmarshal(configData, &cfg)
 		if err != nil {
@@ -187,6 +194,7 @@ var shellCmd = &cobra.Command{
 	},
 }
 
+// Execute runs the command line interface.
 func Execute() {
 	rootCmd := &cobra.Command{Use: "xray"}
 
@@ -215,6 +223,8 @@ func parseDbType(s string) xrayTypes.DbType {
 		return xrayTypes.BigQuery
 	case "redshift":
 		return xrayTypes.Redshift
+	case "mssql":
+		return xrayTypes.MSSQL
 	default:
 		return xrayTypes.MySQL
 	}

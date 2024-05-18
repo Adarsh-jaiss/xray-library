@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/thesaas-company/xray"
@@ -22,6 +21,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Connected to database")
+
 	data, err := client.Tables(config.DatabaseName)
 	if err != nil {
 		panic(err)
@@ -36,33 +37,8 @@ func main() {
 	}
 	fmt.Println(response)
 
-	table := types.Table{
-		Name: "user",
-		Columns: []types.Column{
-			{
-				Name:         "id",
-				Type:         "int",
-				IsNullable:   "NO",
-				DefaultValue: sql.NullString{String: "", Valid: false},
-				IsPrimary:    true,
-				IsUnique:     sql.NullString{String: "YES", Valid: true},
-			},
-			{
-				Name:         "name",
-				Type:         "varchar(255)",
-				IsNullable:   "NO",
-				DefaultValue: sql.NullString{String: "", Valid: false},
-				IsPrimary:    false,
-				IsUnique:     sql.NullString{String: "NO", Valid: true},
-			},
-			{
-				Name:       "age",
-				Type:       "int",
-				IsNullable: "YES",
-			},
-		},
+	for _, v := range response {
+		query := client.GenerateCreateTableQuery(v)
+		fmt.Println(query)
 	}
-
-	query := client.GenerateCreateTableQuery(table)
-	fmt.Println(query)
 }

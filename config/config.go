@@ -47,24 +47,6 @@ type Config struct {
 
 	// Server is the MSSQL database server.
 	Server string `yaml:"server" pflag:",Database server"`
-
-	// AWS holds the AWS configuration details.
-	// AWS AWS `yaml:"aws"`
 }
 
-// type AWS struct {
-// 	// Region is the AWS region.
-// 	Region string `yaml:"region" pflag:",AWS region"`
 
-// 	// AccessKey is the AWS access key.
-// 	AccessKey string `yaml:"access_key" pflag:",AWS access key"`
-
-// 	// SecretKey is the AWS secret key.
-// 	SecretAccessKey string `yaml:"secret_key" pflag:",AWS secret key"`
-
-// 	// ClusterIdentifier is the AWS cluster identifier.
-// 	ClusterIdentifier string `yaml:"cluster_identifier" pflag:",AWS cluster identifier"`
-
-// 	// SecretArn is the AWS secret ARN.
-// 	SecretArn string `yaml:"secret_arn" pflag:",AWS secret ARN"`
-// }

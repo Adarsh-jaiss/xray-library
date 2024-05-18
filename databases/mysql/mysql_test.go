@@ -132,6 +132,9 @@ func TestGetTableName(t *testing.T) {
 	}
 }
 
+// TestGenerateCreateTablequery is a unit test function that tests the GenerateCreateTableQuery method of the MySQL.
+// It creates a mock instance of MySQL, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestGenerateCreateTablequery(t *testing.T) {
 	db, mock := MockDB()
 	defer func() {

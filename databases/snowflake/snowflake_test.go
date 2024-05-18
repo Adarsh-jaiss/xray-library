@@ -145,6 +145,9 @@ func TestTables(t *testing.T) {
 	}
 }
 
+// TestGenerateCreateTableQuery is a unit test function that tests the GenerateCreateTableQuery method of the Snowflake struct.
+// It creates a mock instance of Snowflake, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestGenerateCreateTableQuery(t *testing.T) {
 	db, mock := MockDB()
 	defer func() {

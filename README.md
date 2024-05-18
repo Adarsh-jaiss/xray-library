@@ -20,9 +20,7 @@ go get github.com/thesaas-company/xray@latest
 - Navigate to the `xray` directory.
 - Run this command to install the dependencies : `go mod install`
 
-## Maintainer
-- [@Adarsh Jaiswal](https://github.com/adarsh-jaiss)
-- [@tqindia](https://github.com/tqindia)
+### Supported Databbases
 
 ## Show Your Support!
 

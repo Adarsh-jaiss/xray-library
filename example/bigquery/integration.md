@@ -7,14 +7,15 @@ This guide demonstrates how to use the Xray library to inspect and execute queri
 
     Add your BigQuery database configuration to your Go application:
 
+    **Note : Set env variable for password and pass your password as : export GOOGLE_APPLICATION_CREDENTIALS=path/to/secret.json**
+
     ```go
     config := &config.Config{
         ProjectID:    "ProjectID",      // Replace with your BigQuery project ID
-        JSONKeyPath:  "JSONKeyPath",    // Path to your JSON key file
         DatabaseName: "Database_Name",  // Replace with your BigQuery database name
     }
 
-    Ensure you replace `"ProjectID"`, `"JSONKeyPath"`, and `"Database_Name"` with your actual BigQuery project ID, JSON key file path, and database name respectively.
+    Ensure you replace `"ProjectID"`, , and `"Database_Name"` with your actual BigQuery project ID, and database name respectively.
 
 2. **Connect to BigQuery Database**
     
@@ -48,6 +49,33 @@ This guide demonstrates how to use the Xray library to inspect and execute queri
         response = append(response, table)
     }
     fmt.Println(response)
+
+4. **Generate Create Table Query**
+   
+   generate and print SQL CREATE TABLE queries for each table in the response slice.
+
+   ```go
+    // Iterate over each table in the response slice.
+    for _, v := range response {
+        // Generate a CREATE TABLE query for the current table.
+        query := rs.GenerateCreateTableQuery(v)
+        // Print the generated query.
+        fmt.Println(query)
+    }
+    ```
+5. **Execute Queries**
+
+    Execute queries against your  database:
+
+    ```go
+    query := "SELECT * FROM `project_id.dataset_id.my_table`" // Specify your SQL query
+    result, err := client.Execute(query)
+    if err != nil {
+        fmt.Printf("Error executing query: %v\n", err)
+        return
+    }
+    fmt.Printf("Query result: %s\n", string(result))
+  
 
 #### Running the Application
     After configuring your BigQuery settings, run the following commands to execute the application:

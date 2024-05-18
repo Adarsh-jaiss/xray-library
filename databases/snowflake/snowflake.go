@@ -74,6 +74,7 @@ func NewSnowflakeWithConfig(config *config.Config) (types.ISQL, error) {
 }
 
 // Schema returns the schema of a table in Snowflake.
+// It takes the table name as an argument and returns a Table struct and an error if any.
 func (s *Snowflake) Schema(table string) (types.Table, error) {
 	var res types.Table
 
@@ -115,6 +116,7 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 }
 
 // Tables returns a list of tables in a Snowflake database.
+// It takes the database name as an argument and returns a slice of table names.
 func (s *Snowflake) Tables(databaseName string) ([]string, error) {
 	query := fmt.Sprintf("USE WAREHOUSE %s", s.Config.Warehouse)
 
@@ -203,6 +205,8 @@ func (s *Snowflake) Execute(query string) ([]byte, error) {
 	return jsonData, nil
 }
 
+// GenerateCreateTableQuery generates a CREATE TABLE query for Snowflake.
+// It takes a Table struct as an argument and returns the query as a string.
 func (s *Snowflake) GenerateCreateTableQuery(table types.Table) string {
 	query := "CREATE TABLE " + table.Name + " ("
 	for i, column := range table.Columns {

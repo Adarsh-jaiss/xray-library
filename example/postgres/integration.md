@@ -10,6 +10,10 @@ Xray is a library that provides tools for inspecting and analyzing various types
 
 1. **Define Database Configuration**
 
+     Add your Postgres database configuration to your Go application:
+
+    **Note : Set env variable DB_Password for adding password and pass your password as : `export DB_PASSWORD=your_password`**
+ 
    ```go
    // Define your database configuration here
    dbConfig := &config.Config{
@@ -22,7 +26,7 @@ Xray is a library that provides tools for inspecting and analyzing various types
 
 ***Note** : Ensure to replace the placeholders with your actual database configuration.
 
-2. **Connect to Postgres Database**
+1. **Connect to Postgres Database**
 
     ```go
     client, err := xray.NewClientWithConfig(dbConfig, types.Postgres)
@@ -31,7 +35,7 @@ Xray is a library that provides tools for inspecting and analyzing various types
     }
     fmt.Println("Connected to database")
 
-3. **Retrieve Table Names**
+2. **Retrieve Table Names**
 
     ```go
     data, err := client.Tables(dbConfig.DatabaseName)
@@ -40,7 +44,7 @@ Xray is a library that provides tools for inspecting and analyzing various types
     }
     fmt.Println("Tables :", data)
 
-4. **Print Table Schema**
+3. **Print Table Schema**
 
     ```go
     var response []types.Table
@@ -52,6 +56,36 @@ Xray is a library that provides tools for inspecting and analyzing various types
         response = append(response, table)
     }
     fmt.Println(response)
+
+4. **Generate Create Table Query**
+   
+   generate and print SQL CREATE TABLE queries for each table in the response slice.
+
+   ```go
+    // Iterate over each table in the response slice.
+    for _, v := range response {
+        // Generate a CREATE TABLE query for the current table.
+        query := client.GenerateCreateTableQuery(v)
+        // Print the generated query.
+        fmt.Println(query)
+    }
+    ```
+
+5. **Execute Queries**
+
+    Execute queries against your  database:
+
+    ```go
+    query := `SELECT * FROM "my_table"` // Specify your SQL query
+    result, err := client.Execute(query)
+    if err != nil {
+        fmt.Printf("Error executing query: %v\n", err)
+        return
+    }
+    fmt.Printf("Query result: %s\n", string(result))
+  
+
+
 
 #### Environment Variables
 

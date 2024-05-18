@@ -6,16 +6,16 @@ This guide illustrates how to use the Xray library to inspect and execute querie
 1. **Define Redshift Configuration**
 
     Start by defining the configuration for your Amazon Redshift instance in your Go application:
+    
+    **Note : Set env variable DB_Password for adding password and pass your password as : `export DB_PASSWORD=your_password`**
 
     ```go
     cfg := &config.Config{
-        AWS: config.AWS{
-            Region:          "us-west-2",    // Specify your AWS region
-            AccessKey:       "access_key",   // Add your AWS access key
-            SecretAccessKey: "secret_access",// Add your AWS secret access key
-        },
+        Host:         "default-workgroup.587687374938.ap-north-2.redshift-serverless.amazonaws.com"
+        Username:     "admin",
+		Port:         "5439",
+        SSL:          "require",    // 
         DatabaseName: "my-database",   // Specify your Redshift database name
-        Schema:       "my-schema",     // Specify your Redshift schema name
     }
     ```
 
@@ -24,33 +24,21 @@ This guide illustrates how to use the Xray library to inspect and execute querie
     Create a new instance of the Amazon Redshift database:
 
     ```go
-    rs, err := redshift.NewRedshiftWithConfig(cfg)
-    if err != nil {
-        fmt.Printf("Error creating Redshift instance: %v\n", err)
-        return
-    }
+    client, err := xray.NewClientWithConfig(cfg,types.Redshift)
+	if err != nil {
+		fmt.Printf("Error creating Redshift instance: %v\n", err)
+		return
+	}
     ```
 
-3. **Execute Queries**
+     ```
 
-    Execute queries against your Redshift database:
-
-        ```go
-        query := "SELECT * FROM my_table"   // Specify your SQL query
-        result, err := rs.Execute(query)
-        if err != nil {
-            fmt.Printf("Error executing query: %v\n", err)
-            return
-        }
-        fmt.Printf("Query result: %s\n", string(result))
-        ```
-
-5. **Retrieve Tables and Schema**
+3. **Retrieve Tables and Schema**
 
     Retrieve a list of tables in the database and print their schemas:
 
     ```go
-    tables, err := rs.Tables(cfg.DatabaseName)
+    tables, err := client.Tables(cfg.DatabaseName)
     if err != nil {
         fmt.Printf("Error getting tables: %v\n", err)
         return
@@ -58,7 +46,7 @@ This guide illustrates how to use the Xray library to inspect and execute querie
     fmt.Printf("Tables in database %s: %v\n", cfg.DatabaseName, tables)
     var response []types.Table
     for _, v := range tables {
-        table, err := rs.Schema(v)
+        table, err := client.Schema(v)
         if err != nil {
             panic(err)
         }
@@ -67,10 +55,38 @@ This guide illustrates how to use the Xray library to inspect and execute querie
     fmt.Println(response)
     ```
 
+4. **Generate Create Table Query**
+   
+   generate and print SQL CREATE TABLE queries for each table in the response slice.
+
+   ```go
+    // Iterate over each table in the response slice.
+    for _, v := range response {
+        // Generate a CREATE TABLE query for the current table.
+        query := client.GenerateCreateTableQuery(v)
+        // Print the generated query.
+        fmt.Println(query)
+    }
+    ```
+5. **Execute Queries**
+
+    Execute queries against your Redshift database:
+
+        ```go
+        query := "SELECT * FROM my_table"   // Specify your SQL query
+        result, err := client.Execute(query)
+        if err != nil {
+            fmt.Printf("Error executing query: %v\n", err)
+            return
+        }
+        fmt.Printf("Query result: %s\n", string(result))
+   
+
 #### Running the Application
 
 After configuring your Amazon Redshift settings and integrating Xray into your Go application, run the following commands to ensure your project dependencies are up to date and to execute your application:
 
+    ```
     go mod tidy
     go run main.go
     

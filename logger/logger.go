@@ -89,6 +89,8 @@ func (l *Logger) Tables(databaseName string) ([]string, error) {
 	return result, err
 }
 
+// GenerateCreateTableQuery generates a CREATE TABLE query for the specified table.
+// It logs the execution time.
 func (l *Logger) GenerateCreateTableQuery(table types.Table) string {
 	defer func(start time.Time) {
 		// Log the execution time

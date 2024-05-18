@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 
 	_ "github.com/snowflakedb/gosnowflake"
@@ -26,35 +25,6 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("Connected to database")
-	table := types.Table{
-		Name: "user",
-		Columns: []types.Column{
-			{
-				Name:         "id",
-				Type:         "int",
-				IsNullable:   "NO",
-				DefaultValue: sql.NullString{String: "", Valid: false},
-				IsPrimary:    true,
-				IsUnique:     sql.NullString{String: "YES", Valid: true},
-			},
-			{
-				Name:         "name",
-				Type:         "varchar(255)",
-				IsNullable:   "NO",
-				DefaultValue: sql.NullString{String: "", Valid: false},
-				IsPrimary:    false,
-				IsUnique:     sql.NullString{String: "NO", Valid: true},
-			},
-			{
-				Name:       "age",
-				Type:       "int",
-				IsNullable: "YES",
-			},
-		},
-	}
-
-	query := client.GenerateCreateTableQuery(table)
-	fmt.Println(query)
 
 	data, err := client.Tables(config.DatabaseName)
 	if err != nil {
@@ -71,4 +41,9 @@ func main() {
 		response = append(response, table)
 	}
 	fmt.Println(response)
+
+	for _, v := range response {
+		query := client.GenerateCreateTableQuery(v)
+		fmt.Println(query)
+	}
 }
