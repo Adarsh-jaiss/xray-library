@@ -27,6 +27,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("Tables :",data)
 	var response []types.Table
 	for _, v := range data {
 		table, err := client.Schema(v)

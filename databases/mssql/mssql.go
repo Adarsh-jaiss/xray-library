@@ -188,30 +188,42 @@ func (m *MSSQL) Execute(query string) ([]byte, error) {
 // It takes the table definition as an argument and returns the SQL query as a string.
 func (m *MSSQL) GenerateCreateTableQuery(table types.Table) string {
 	query := "CREATE TABLE [" + table.Name + "] ("
-	pk := ""
-	unique := ""
+	var pks []string
+	var uniques []string
+
 	for i, column := range table.Columns {
 		colType := strings.ToUpper(column.Type)
 		query += "[" + column.Name + "] " + colType
+
 		if column.AutoIncrement {
 			query += " IDENTITY(1,1)"
-		}
-		if column.IsPrimary {
-			pk = " PRIMARY KEY ([" + column.Name + "])"
 		}
 		if column.DefaultValue.Valid {
 			query += " DEFAULT (" + column.DefaultValue.String + ")"
 		}
-		if column.IsUnique.String == "YES" && !column.IsPrimary {
-			unique = ", UNIQUE ([" + column.Name + "])"
-		}
-		if column.IsNullable == "NO" && !column.IsPrimary {
+		if column.IsNullable == "NO" {
 			query += " NOT NULL"
+		}
+		if column.IsPrimary {
+			pks = append(pks, "["+column.Name+"]")
+		} else if column.IsUnique.String == "YES" {
+			uniques = append(uniques, "["+column.Name+"]")
 		}
 		if i < len(table.Columns)-1 {
 			query += ", "
 		}
 	}
-	query += pk + unique + ")"
+
+	if len(pks) > 0 {
+		query += ", PRIMARY KEY (" + strings.Join(pks, ", ") + ")"
+	}
+
+	if len(uniques) > 0 {
+		for _, unique := range uniques {
+			query += ", UNIQUE (" + unique + ")"
+		}
+	}
+
+	query += ");"
 	return query
 }

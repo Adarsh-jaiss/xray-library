@@ -9,6 +9,7 @@ import (
 	"github.com/thesaas-company/xray/types"
 )
 
+// export DB_PASSWORD=your_password
 func main() {
 	config := &config.Config{
 		Host:         "127.0.0.1",

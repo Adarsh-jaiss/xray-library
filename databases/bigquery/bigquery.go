@@ -12,7 +12,7 @@ import (
 	_ "gorm.io/driver/bigquery/driver"
 )
 
-var GOOGLE_APPLICATION_CREDENTIALS string
+var GOOGLE_APPLICATION_CREDENTIALS = "GOOGLE_APPLICATION_CREDENTIALS"
 
 const (
 	BigQuery_SCHEMA_QUERY = "SELECT * FROM %s LIMIT 1"

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
 )
 
@@ -100,49 +101,40 @@ func TestExecute(t *testing.T) {
 // It creates a mock instance of Snowflake, sets the expected return values, and calls the method under test.
 // It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestTables(t *testing.T) {
-	// create a new mock database connection
-	db, mock := MockDB()
-	defer func() {
-		if err := db.Close(); err != nil {
-			fmt.Println(err)
-		}
-	}()
+    // create a new mock database connection
+    db, mock, err := sqlmock.New()
+    if err != nil {
+        t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+    }
 
-	tableList := []string{"user", "product", "order"}
-	Warehouse := "datasherlock"
-	// set the expected return values for the query
-	mock.ExpectQuery("USE WAREHOUSE ").WithArgs(Warehouse).WillReturnRows(sqlmock.NewRows([]string{"result"}).AddRow(""))
+    tableList := []string{"user", "product", "order"}
+    databaseName := "test"
+    schemaName := "public"
 
-	rows := sqlmock.NewRows([]string{"table_name"}).
-		AddRow(tableList[0]).
-		AddRow(tableList[1]).
-		AddRow(tableList[2])
-	mock.ExpectQuery(regexp.QuoteMeta(SNOWFLAKE_TABLES_LIST_QUERY)).WillReturnRows(rows)
+    // set the expected return values for the query
+    rows := sqlmock.NewRows([]string{"table_name"}).
+        AddRow(tableList[0]).
+        AddRow(tableList[1]).
+        AddRow(tableList[2])
+    query := fmt.Sprintf(SNOWFLAKE_TABLES_LIST_QUERY, databaseName, schemaName)
+    mock.ExpectQuery(regexp.QuoteMeta(query)).WillReturnRows(rows)
 
-	s, err := NewSnowflake(db) // create a new instance of our Snowflake object
-	if err != nil {
-		t.Fatalf("error initializing snowflake: %s", err)
-	}
+    s := &Snowflake{Client: db, Config: &config.Config{Schema: schemaName}} // create a new instance of our Snowflake object
 
-	query := fmt.Sprintf("USE WAREHOUSE %s", Warehouse)
-	_, err = s.Tables(query) // call the Tables method
-	if err != nil {
-		return
-	}
+    tables, err := s.Tables(databaseName)
+    if err != nil {
+        t.Errorf("error retrieving table names: %s", err)
+    }
+	fmt.Println("tables:",tables)
 
-	tables, err := s.Tables("test") // Database name isn't used in the query, so you can pass any value here
-	if err != nil {
-		t.Errorf("error retrieving table names: %s", err)
-	}
+    expected := tableList // Using the same list as returned by the mock
+    if !reflect.DeepEqual(tables, expected) {
+        t.Errorf("expected: %v, got: %v", expected, tables)
+    }
 
-	expected := tableList // Using the same list as returned by the mock
-	if !reflect.DeepEqual(tables, expected) {
-		t.Errorf("expected: %v, got: %v", expected, tables)
-	}
-
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
-	}
+    if err := mock.ExpectationsWereMet(); err != nil {
+        t.Errorf("there were unfulfilled expectations: %s", err)
+    }
 }
 
 // TestGenerateCreateTableQuery is a unit test function that tests the GenerateCreateTableQuery method of the Snowflake struct.

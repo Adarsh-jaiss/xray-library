@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	"fmt"
 
 	_ "github.com/snowflakedb/gosnowflake"
@@ -12,12 +13,12 @@ import (
 // export DB Passowrd, Export root=DB_PASSWORD
 func main() {
 	config := &config.Config{
-		Account:      "account",
-		Username:     "Username",
-		DatabaseName: "DatabaseName",
+		Account:      "tvhcdje-pd56667",
+		Username:     "jaizadarsh",
+		DatabaseName: "SNOWFLAKE_SAMPLE_DATA",
 		Port:         "443",
-		Warehouse:    "Wareshousw_name",
-		Schema:       "Schema", // optional
+		Warehouse:    "COMPUTE_WH",
+		Schema:       "TPCH_SF10", // optional
 	}
 
 	client, err := xray.NewClientWithConfig(config, types.Snowflake)
