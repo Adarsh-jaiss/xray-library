@@ -12,7 +12,7 @@ This guide illustrates how to use the Xray library to inspect and execute querie
 
     ```go
     cfg := &config.Config{
-        Server:       "localhost",
+        Host:       "localhost",
         Username:     "sa",
         Port:         "14330",
         DatabaseName: "master",

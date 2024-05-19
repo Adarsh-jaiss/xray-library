@@ -12,7 +12,7 @@ import (
 // export DB_PASSWORD=your_password
 func main() {
 	config := config.Config{
-		Server:       "localhost",
+		Host:       "localhost",
 		Username:     "sa",
 		Port:         "14330",
 		DatabaseName: "master",

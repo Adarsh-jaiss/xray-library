@@ -43,7 +43,7 @@ func NewMSSQLFromConfig(config *config.Config) (types.ISQL, error) {
 	}
 
 	DB_PASSWORD = os.Getenv(DB_PASSWORD)
-	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s", config.Server, config.Username, DB_PASSWORD, config.Port)
+	connString := fmt.Sprintf("server=%s;user id=%s;password=%s;port=%s", config.Host, config.Username, DB_PASSWORD, config.Port)
 
 	conn, err := sql.Open("mssql", connString)
 	if err != nil {

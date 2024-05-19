@@ -44,9 +44,6 @@ type Config struct {
 
 	// SecretName is the AWS secret name.
 	SecretName string `yaml:"secret_name" pflag:",AWS secret name"`
-
-	// Server is the MSSQL database server.
-	Server string `yaml:"server" pflag:",Database server"`
 }
 
 
