@@ -194,7 +194,7 @@ func (m *MySQL) GenerateCreateTableQuery(table types.Table) string {
 	query := "CREATE TABLE " + table.Name + " ("
 	for i, column := range table.Columns {
 		colType := strings.ToUpper(column.Type)
-		query += column.Name + " " + colType
+		query += column.Name + " " + convertTypeToMysql(colType)
 		if column.AutoIncrement {
 			query += " AUTO_INCREMENT"
 		}
@@ -217,6 +217,47 @@ func (m *MySQL) GenerateCreateTableQuery(table types.Table) string {
 	query += ")"
 	return query
 }
+
+// convertTypeToMysql converts a Data type to a MySQL SQL Data type.
+func convertTypeToMysql(dataType string) string {
+	// Map column types to MySQL equivalents
+	switch dataType {
+	case "BOOL":
+		return "TINYINT"
+	case "BOOLEAN":
+		return "TINYINT"
+	case "CHARACTER VARYING":
+		return "VARCHAR"
+	case "FIXED":
+		return "DECIMAL"
+	case "FLOAT4":
+		return "FLOAT"
+	case "FLOAT8":
+		return "DOUBLE"
+	case "INT1":
+		return "TINYINT"
+	case "INT2":
+		return "SMALLINT"
+	case "INT3":
+		return "MEDIUMINT"
+	case "INT4":
+		return "INT"
+	case "INT8":
+		return "BIGINT"
+	case "LONG VARBINARY":
+		return "MEDIUMBLOB"
+	case "LONG VARCHAR", "LONG":
+		return "MEDIUMTEXT"
+	case "MIDDLEINT":
+		return "MEDIUMINT"
+	case "NUMERIC":
+		return "DECIMAL"
+	// Add more type conversions as needed
+	default:
+		return dataType
+	}
+}
+
 
 // Create a new MySQL connection URL with the given configuration.
 func dbURLMySQL(dbConfig *config.Config) string {

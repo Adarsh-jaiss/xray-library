@@ -192,7 +192,7 @@ func (r *Redshift) GenerateCreateTableQuery(table types.Table) string {
 	query := fmt.Sprintf("CREATE TABLE %s.%s.%s (", r.Config.DatabaseName, r.Config.Schema, table.Name)
 	for i, column := range table.Columns {
 		colType := strings.ToUpper(column.Type)
-		query += column.Name + " " + colType
+		query += column.Name + " " + convertTypeToRedshift(colType)
 
 		if column.IsPrimary {
 			query += " PRIMARY KEY"
@@ -211,4 +211,56 @@ func (r *Redshift) GenerateCreateTableQuery(table types.Table) string {
 	}
 	query += ");"
 	return query
+}
+
+// convertTypeToRedshift converts a given column type to its equivalent in Redshift.
+func convertTypeToRedshift(dataType string) string {
+	// Map column types to Redshift equivalents
+	switch dataType {
+	case "SMALLINT", "INT2":
+		return "SMALLINT"
+	case "INTEGER", "INT", "INT4":
+		return "INTEGER"
+	case "BIGINT", "INT8":
+		return "BIGINT"
+	case "DECIMAL", "NUMERIC":
+		return "DECIMAL"
+	case "REAL", "FLOAT4":
+		return "REAL"
+	case "DOUBLE PRECISION", "FLOAT8", "FLOAT":
+		return "DOUBLE PRECISION"
+	case "CHAR", "CHARACTER", "NCHAR", "BPCHAR":
+		return "CHAR"
+	case "VARCHAR", "CHARACTER VARYING", "NVARCHAR", "TEXT":
+		return "VARCHAR"
+	case "DATE":
+		return "DATE"
+	case "TIME", "TIME WITHOUT TIME ZONE":
+		return "TIME"
+	case "TIMETZ", "TIME WITH TIME ZONE":
+		return "TIMETZ"
+	case "TIMESTAMP", "TIMESTAMP WITHOUT TIME ZONE":
+		return "TIMESTAMP"
+	case "TIMESTAMPTZ", "TIMESTAMP WITH TIME ZONE":
+		return "TIMESTAMPTZ"
+	case "INTERVAL YEAR TO MONTH":
+		return "INTERVAL YEAR TO MONTH"
+	case "INTERVAL DAY TO SECOND":
+		return "INTERVAL DAY TO SECOND"
+	case "BOOLEAN", "BOOL":
+		return "BOOLEAN"
+	case "HLLSKETCH":
+		return "HLLSKETCH"
+	case "SUPER":
+		return "SUPER"
+	case "VARBYTE", "VARBINARY", "BINARY VARYING":
+		return "VARBYTE"
+	case "GEOMETRY":
+		return "GEOMETRY"
+	case "GEOGRAPHY":
+		return "GEOGRAPHY"
+	// Add more type conversions as needed
+	default:
+		return dataType
+	}
 }

@@ -213,22 +213,43 @@ func (b *BigQuery) GenerateCreateTableQuery(table types.Table) string {
 func convertTypeToBigQuery(dataType string) string {
 	// Map column types to BigQuery equivalents
 	switch dataType {
-	case "INT":
-		return "INT64"
-	case "VARCHAR(255)", "TEXT":
-		return "STRING"
-	case "INTEGER":
-		return "INT64"
-	case "FLOAT":
-		return "FLOAT64"
-	case "BOOLEAN":
+	case "ARRAY":
+		return "ARRAY"
+	case "BIGNUMERIC":
+		return "BIGNUMERIC"
+	case "BOOL":
 		return "BOOL"
+	case "BYTES":
+		return "BYTES"
 	case "DATE":
 		return "DATE"
-	case "DATETIME", "TIMESTAMP":
+	case "DATETIME":
+		return "DATETIME"
+	case "FLOAT64", "FLOAT":
+		return "FLOAT64"
+	case "GEOGRAPHY":
+		return "GEOGRAPHY"
+	case "INT64", "INT", "INTEGER":
+		return "INT64"
+	case "INTERVAL":
+		return "INTERVAL"
+	case "JSON":
+		return "JSON"
+	case "NUMERIC":
+		return "NUMERIC"
+	case "RANGE":
+		return "RANGE"
+	case "STRING", "VARCHAR(255)", "TEXT":
+		return "STRING"
+	case "STRUCT":
+		return "STRUCT"
+	case "TIME":
+		return "TIME"
+	case "TIMESTAMP":
 		return "TIMESTAMP"
 	// Add more type conversions as needed
 	default:
 		return dataType
 	}
 }
+
