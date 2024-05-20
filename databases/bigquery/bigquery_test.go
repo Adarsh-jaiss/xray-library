@@ -58,11 +58,10 @@ func TestSchema(t *testing.T) {
 
 }
 
-// TestExecute is a unit test function that tests the Execute method of the BigQuery struct.
+// TestTables is a unit test function that tests the Tables method of the BigQuery struct.
 // It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
 // It then asserts the expected return values and checks if the method was called with the correct arguments.
-
-func TestGetTableName(t *testing.T) {
+func TestTables(t *testing.T) {
 	// create a new mock database connection
 	db, mock := MockDB()
 	defer func() {
@@ -96,6 +95,10 @@ func TestGetTableName(t *testing.T) {
 	}
 }
 
+
+// TestExecute is a unit test function that tests the Execute method of the BigQuery struct.
+// It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestExecute(t *testing.T) {
 	// create a new mock database connection
 	db, mock := MockDB()
@@ -152,6 +155,9 @@ func TestExecute(t *testing.T) {
 	}
 }
 
+// TestGenerateCreateTablequeryis a unit test function that tests the TestGenerateCreateTablequery method of the BigQuery struct.
+// It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
+// It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestGenerateCreateTablequery(t *testing.T) {
 	db, mock := MockDB()
 	defer func() {

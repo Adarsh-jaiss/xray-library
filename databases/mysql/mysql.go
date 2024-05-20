@@ -56,7 +56,8 @@ func NewMySQLWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 
 }
 
-// This method will accept a table name as input and return the table schema (structure).
+// Schema retrieves the table schema for the given table name.
+// It takes the table name as an argument and returns the table schema as a types.Table object.
 func (m *MySQL) Schema(table string) (types.Table, error) {
 	var response types.Table
 
@@ -100,7 +101,8 @@ func (m *MySQL) Schema(table string) (types.Table, error) {
 	}, nil
 }
 
-// Execute a database query and return the result in JSON format
+// Execute executes the given SQL query and returns the result as JSON.
+// It takes the SQL query as an argument.
 func (m *MySQL) Execute(query string) ([]byte, error) {
 
 	// execute the sql statement
@@ -154,7 +156,8 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 	return jsonData, nil
 }
 
-// Retrieve the names of tables in the specified database.
+// Tables retrieves the list of tables in the given database.
+// It takes the database name as an argument and returns a list of table names.
 func (m *MySQL) Tables(databaseName string) ([]string, error) {
 
 	// execute the sql statement
@@ -191,7 +194,7 @@ func (m *MySQL) GenerateCreateTableQuery(table types.Table) string {
 	query := "CREATE TABLE " + table.Name + " ("
 	for i, column := range table.Columns {
 		colType := strings.ToUpper(column.Type)
-		query += column.Name + " " + colType
+		query += column.Name + " " + convertTypeToMysql(colType)
 		if column.AutoIncrement {
 			query += " AUTO_INCREMENT"
 		}
@@ -214,6 +217,47 @@ func (m *MySQL) GenerateCreateTableQuery(table types.Table) string {
 	query += ")"
 	return query
 }
+
+// convertTypeToMysql converts a Data type to a MySQL SQL Data type.
+func convertTypeToMysql(dataType string) string {
+	// Map column types to MySQL equivalents
+	switch dataType {
+	case "BOOL":
+		return "TINYINT"
+	case "BOOLEAN":
+		return "TINYINT"
+	case "CHARACTER VARYING":
+		return "VARCHAR"
+	case "FIXED":
+		return "DECIMAL"
+	case "FLOAT4":
+		return "FLOAT"
+	case "FLOAT8":
+		return "DOUBLE"
+	case "INT1":
+		return "TINYINT"
+	case "INT2":
+		return "SMALLINT"
+	case "INT3":
+		return "MEDIUMINT"
+	case "INT4":
+		return "INT"
+	case "INT8":
+		return "BIGINT"
+	case "LONG VARBINARY":
+		return "MEDIUMBLOB"
+	case "LONG VARCHAR", "LONG":
+		return "MEDIUMTEXT"
+	case "MIDDLEINT":
+		return "MEDIUMINT"
+	case "NUMERIC":
+		return "DECIMAL"
+	// Add more type conversions as needed
+	default:
+		return dataType
+	}
+}
+
 
 // Create a new MySQL connection URL with the given configuration.
 func dbURLMySQL(dbConfig *config.Config) string {

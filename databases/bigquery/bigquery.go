@@ -12,7 +12,7 @@ import (
 	_ "gorm.io/driver/bigquery/driver"
 )
 
-var GOOGLE_APPLICATION_CREDENTIALS string
+var GOOGLE_APPLICATION_CREDENTIALS = "GOOGLE_APPLICATION_CREDENTIALS"
 
 const (
 	BigQuery_SCHEMA_QUERY = "SELECT * FROM %s LIMIT 1"
@@ -35,6 +35,7 @@ func NewBigQuery(client *sql.DB) (types.ISQL, error) {
 }
 
 // NewBigQueryWithConfig creates a new instance of BigQuery with the provided configuration.
+// It returns an instance of types.ISQL and an error.
 func NewBigQueryWithConfig(cfg *config.Config) (types.ISQL, error) {
 	if os.Getenv(GOOGLE_APPLICATION_CREDENTIALS) == "" || len(os.Getenv(GOOGLE_APPLICATION_CREDENTIALS)) == 0 {
 		return nil, fmt.Errorf("please set %s env variable for the database", GOOGLE_APPLICATION_CREDENTIALS)
@@ -70,7 +71,7 @@ func (b *BigQuery) Schema(table string) (types.Table, error) {
 		}
 	}()
 
-	// scanning the result into and append it into a variable
+	// scanning the result into a variable and append it into a the slice
 	var columns []types.Column
 	columnNames, err := rows.Columns()
 	if err != nil {
@@ -104,6 +105,8 @@ func (b *BigQuery) Schema(table string) (types.Table, error) {
 
 }
 
+// Execute executes a query on BigQuery.
+// It takes a query string as input and returns the result as a byte slice and an error.
 func (b *BigQuery) Execute(query string) ([]byte, error) {
 	rows, err := b.Client.Query(query)
 	if err != nil {
@@ -161,7 +164,6 @@ func (b *BigQuery) Execute(query string) ([]byte, error) {
 
 // Tables returns a list of tables in a dataset.
 // It takes a dataset name as input and returns a slice of strings and an error.
-
 func (b *BigQuery) Tables(dataset string) ([]string, error) {
 	// res, err := b.Client.Query("SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = '" + Dataset + "'")
 
@@ -207,25 +209,47 @@ func (b *BigQuery) GenerateCreateTableQuery(table types.Table) string {
 	return query
 }
 
+// convertTypeToBigQuery converts a Data type to a BigQuery SQL Data type.
 func convertTypeToBigQuery(dataType string) string {
 	// Map column types to BigQuery equivalents
 	switch dataType {
-	case "INT":
-		return "INT64"
-	case "VARCHAR(255)", "TEXT":
-		return "STRING"
-	case "INTEGER":
-		return "INT64"
-	case "FLOAT":
-		return "FLOAT64"
-	case "BOOLEAN":
+	case "ARRAY":
+		return "ARRAY"
+	case "BIGNUMERIC":
+		return "BIGNUMERIC"
+	case "BOOL":
 		return "BOOL"
+	case "BYTES":
+		return "BYTES"
 	case "DATE":
 		return "DATE"
-	case "DATETIME", "TIMESTAMP":
+	case "DATETIME":
+		return "DATETIME"
+	case "FLOAT64", "FLOAT":
+		return "FLOAT64"
+	case "GEOGRAPHY":
+		return "GEOGRAPHY"
+	case "INT64", "INT", "INTEGER":
+		return "INT64"
+	case "INTERVAL":
+		return "INTERVAL"
+	case "JSON":
+		return "JSON"
+	case "NUMERIC":
+		return "NUMERIC"
+	case "RANGE":
+		return "RANGE"
+	case "STRING", "VARCHAR(255)", "TEXT":
+		return "STRING"
+	case "STRUCT":
+		return "STRUCT"
+	case "TIME":
+		return "TIME"
+	case "TIMESTAMP":
 		return "TIMESTAMP"
 	// Add more type conversions as needed
 	default:
 		return dataType
 	}
 }
+

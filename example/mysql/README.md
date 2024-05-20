@@ -27,7 +27,7 @@ export DB_PASSWORD=college
 
 - Ensure you have Xray installed and imported in your Go application.
 
-- Checkout [Integration.md](https://github.com/thesaas-company/xray/tree/main/example/mysql/integration.md) for a code sample demonstrating how to connect to MySQL using Xray.
+- Checkout [Integration.md](https://github.com/thesaas-company/xray/tree/main/example/mysql/integration.md) for a detailed documentation and [main.go](https://github.com/thesaas-company/xray/tree/main/example/mysql/main.go) for code sample demonstrating how to connect to MySQL using Xray.
 
 - Once you have the code, run the following commands:
 ```

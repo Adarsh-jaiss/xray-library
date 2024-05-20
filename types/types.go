@@ -6,10 +6,10 @@ import (
 
 // ISQL is an interface that defines the methods that a SQL database must implement.
 type ISQL interface {
-	Schema(string) (Table, error)
-	Execute(string) ([]byte, error)
-	Tables(string) ([]string, error)
-	GenerateCreateTableQuery(Table) string
+	Schema(string) (Table, error)          // Schema retrieves the schema for the specified table.
+	Execute(string) ([]byte, error)        // Execute executes the given SQL query.
+	Tables(string) ([]string, error)       // Tables retrieves the list of tables for the specified database.
+	GenerateCreateTableQuery(Table) string // GenerateCreateTableQuery generates the CREATE TABLE query for the specified table.
 }
 
 // Table represents a database table.
@@ -54,6 +54,16 @@ type Column struct {
 	OrdinalPosition        sql.NullInt64  `json:"ordinal_position"`         // OrdinalPosition is the position of the column in the table.
 	IdentitySeed           sql.NullInt64  `json:"identity_seed"`            // IdentitySeed is the seed value of the identity column.
 	IdentityStep           sql.NullInt64  `json:"identity_step"`            // IdentityStep is the step value of the identity column.
+}
+
+// TableResponse is the struct that holds the response from the Redshift Tables query.
+type TableResponse struct {
+	TableName    string         `json:"table_name"`    // TableName is the name of the table.
+	DatabaseName string         `json:"database_name"` // DatabaseName is the name of the database.
+	SchemaName   string         `json:"schema_name"`   // SchemaName is the name of the schema.
+	TableType    string         `json:"table_type"`    // TableType is the type of the table.
+	TableAcl     sql.NullString `json:"table_acl"`     // TableAcl is the access control list of the table.
+	Remarks      sql.NullString `json:"remarks"`       // Remarks is the remarks of the table.
 }
 
 // QueryResult represents the result of a database query.

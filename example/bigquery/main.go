@@ -21,24 +21,6 @@ func main() {
 	}
 	fmt.Println("Connected to database")
 
-	table := types.Table{
-		Dataset: config.DatabaseName,
-		Name:    "table",
-		Columns: []types.Column{
-			{Name: "id", Type: "INT64", IsPrimary: true},
-			{Name: "name", Type: "STRING"},
-			{Name: "created_at", Type: "TIMESTAMP"},
-		},
-	}
-
-	query := client.GenerateCreateTableQuery(table)
-	fmt.Println(query)
-	res, err := client.Execute(query)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(res)
-
 	tables, err := client.Tables(config.DatabaseName)
 	if err != nil {
 		panic(err)
@@ -55,4 +37,9 @@ func main() {
 		response = append(response, table)
 	}
 	fmt.Println(response)
+
+	for _, v := range response {
+		query := client.GenerateCreateTableQuery(v)
+		fmt.Println(query)
+	}
 }

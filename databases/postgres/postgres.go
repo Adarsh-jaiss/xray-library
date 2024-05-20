@@ -218,6 +218,8 @@ func (p *Postgres) Tables(databaseName string) ([]string, error) {
 	return tables, nil
 }
 
+// GenerateCreateTableQuery generates a CREATE TABLE query for the given table.
+// It returns the query as a string.
 func (p *Postgres) GenerateCreateTableQuery(table types.Table) string {
 	query := `CREATE TABLE "` + table.Name + `" (`
 	for i, col := range table.Columns {
@@ -245,7 +247,6 @@ func (p *Postgres) GenerateCreateTableQuery(table types.Table) string {
 
 // TableToString returns a string representation of a table.
 // It is used for debugging purposes.
-
 func TableToString(t types.Table) string {
 	var cols []string
 	for _, col := range t.Columns {

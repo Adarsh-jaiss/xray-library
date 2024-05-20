@@ -1,7 +1,7 @@
 package main
 
 import (
-	"database/sql"
+
 	"fmt"
 
 	_ "github.com/snowflakedb/gosnowflake"
@@ -13,12 +13,12 @@ import (
 // export DB Passowrd, Export root=DB_PASSWORD
 func main() {
 	config := &config.Config{
-		Account:      "account",
-		Username:     "Username",
-		DatabaseName: "DatabaseName",
+		Account:      "tvhcdje-pd56667",
+		Username:     "jaizadarsh",
+		DatabaseName: "SNOWFLAKE_SAMPLE_DATA",
 		Port:         "443",
-		Warehouse:    "Wareshousw_name",
-		Schema:       "Schema", // optional
+		Warehouse:    "COMPUTE_WH",
+		Schema:       "TPCH_SF10", // optional
 	}
 
 	client, err := xray.NewClientWithConfig(config, types.Snowflake)
@@ -26,35 +26,6 @@ func main() {
 		panic(err)
 	}
 	fmt.Println("Connected to database")
-	table := types.Table{
-		Name: "user",
-		Columns: []types.Column{
-			{
-				Name:         "id",
-				Type:         "int",
-				IsNullable:   "NO",
-				DefaultValue: sql.NullString{String: "", Valid: false},
-				IsPrimary:    true,
-				IsUnique:     sql.NullString{String: "YES", Valid: true},
-			},
-			{
-				Name:         "name",
-				Type:         "varchar(255)",
-				IsNullable:   "NO",
-				DefaultValue: sql.NullString{String: "", Valid: false},
-				IsPrimary:    false,
-				IsUnique:     sql.NullString{String: "NO", Valid: true},
-			},
-			{
-				Name:       "age",
-				Type:       "int",
-				IsNullable: "YES",
-			},
-		},
-	}
-
-	query := client.GenerateCreateTableQuery(table)
-	fmt.Println(query)
 
 	data, err := client.Tables(config.DatabaseName)
 	if err != nil {
@@ -71,4 +42,9 @@ func main() {
 		response = append(response, table)
 	}
 	fmt.Println(response)
+
+	for _, v := range response {
+		query := client.GenerateCreateTableQuery(v)
+		fmt.Println(query)
+	}
 }

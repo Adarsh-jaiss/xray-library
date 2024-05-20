@@ -24,7 +24,7 @@ var DB_PASSWORD string = "DB_PASSWORD"
 
 const (
 	// SNOWFLAKE_TABLES_LIST_QUERY is the query to list tables in Snowflake.
-	SNOWFLAKE_TABLES_LIST_QUERY = "SHOW TERSE TABLES"
+	SNOWFLAKE_TABLES_LIST_QUERY = "SELECT table_name FROM %s.information_schema.tables WHERE table_schema = '%s';"
 	// SNOWFLAKE_SCHEMA_QUERY is the query to retrieve schema information for a table in Snowflake.
 	SNOWFLAKE_SCHEMA_QUERY = "SELECT column_name::TEXT, data_type::TEXT FROM information_schema.columns WHERE table_name::TEXT = ?;"
 )
@@ -74,6 +74,7 @@ func NewSnowflakeWithConfig(config *config.Config) (types.ISQL, error) {
 }
 
 // Schema returns the schema of a table in Snowflake.
+// It takes the table name as an argument and returns a Table struct and an error if any.
 func (s *Snowflake) Schema(table string) (types.Table, error) {
 	var res types.Table
 
@@ -115,15 +116,11 @@ func (s *Snowflake) Schema(table string) (types.Table, error) {
 }
 
 // Tables returns a list of tables in a Snowflake database.
+// It takes the database name as an argument and returns a slice of table names.
 func (s *Snowflake) Tables(databaseName string) ([]string, error) {
-	query := fmt.Sprintf("USE WAREHOUSE %s", s.Config.Warehouse)
 
-	_, err := s.Client.Query(query)
-	if err != nil {
-		return nil, fmt.Errorf("error executing sql statement: %v", err)
-	}
-
-	rows, err := s.Client.Query(SNOWFLAKE_TABLES_LIST_QUERY)
+	query := fmt.Sprintf(SNOWFLAKE_TABLES_LIST_QUERY, databaseName, s.Config.Schema)
+	rows, err := s.Client.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement and querying tables list: %v", err)
 	}
@@ -135,11 +132,10 @@ func (s *Snowflake) Tables(databaseName string) ([]string, error) {
 
 	var tables []string
 	for rows.Next() {
-		var col1, col2, col3, col4, col5 string
-		if err := rows.Scan(&col1, &col2, &col3, &col4, &col5); err != nil {
+		var table string
+		if err := rows.Scan(&table); err != nil {
 			return nil, fmt.Errorf("error scanning database: %v", err)
 		}
-		table := col2
 		tables = append(tables, table)
 	}
 
@@ -203,6 +199,8 @@ func (s *Snowflake) Execute(query string) ([]byte, error) {
 	return jsonData, nil
 }
 
+// GenerateCreateTableQuery generates a CREATE TABLE query for Snowflake.
+// It takes a Table struct as an argument and returns the query as a string.
 func (s *Snowflake) GenerateCreateTableQuery(table types.Table) string {
 	query := "CREATE TABLE " + table.Name + " ("
 	for i, column := range table.Columns {

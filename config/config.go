@@ -35,4 +35,5 @@ type Config struct {
 
 	// Debug is used to enable or disable debug mode.
 	Debug bool `yaml:"debug" pflag:",Debug mode"`
+
 }

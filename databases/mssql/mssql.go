@@ -13,18 +13,22 @@ import (
 	"github.com/thesaas-company/xray/types"
 )
 
+// DB_PASSWORD is the name of the environment variable that stores the database password.
 var DB_PASSWORD = "DB_PASSWORD"
 
-const (
-	MSSQL_SCHEMA_QUERY = "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT, ORDINAL_POSITION, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '%s'"
-	MSSQL_TABLES_QUERY = "USE %s; SELECT table_name FROM INFORMATION_SCHEMA.TABLES;"
-)
+// MSSQL_SCHEMA_QUERY is the SQL query for retrieving table schema.
+const MSSQL_SCHEMA_QUERY = "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT, ORDINAL_POSITION, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '%s'"
 
+// MSSQL_TABLES_QUERY is the SQL query for listing tables within a database.
+const MSSQL_TABLES_QUERY = "USE %s; SELECT table_name FROM INFORMATION_SCHEMA.TABLES;"
+
+// MSSQL represents the MSSQL database implementation.
 type MSSQL struct {
 	Client *sql.DB
 	Config *config.Config
 }
 
+// NewMSSQL creates a new MSSQL instance with the given client.
 func NewMSSQL(client *sql.DB) (types.ISQL, error) {
 	return &MSSQL{
 		Client: client,
@@ -32,8 +36,9 @@ func NewMSSQL(client *sql.DB) (types.ISQL, error) {
 	}, nil
 }
 
+// NewMSSQLFromConfig creates a new MSSQL instance with the given configuration.
 func NewMSSQLFromConfig(config *config.Config) (types.ISQL, error) {
-	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 { // added mysql to be more verbose about the db type
+	if os.Getenv(DB_PASSWORD) == "" || len(os.Getenv(DB_PASSWORD)) == 0 {
 		return nil, fmt.Errorf("please set %s env variable for the database", DB_PASSWORD)
 	}
 
@@ -51,6 +56,8 @@ func NewMSSQLFromConfig(config *config.Config) (types.ISQL, error) {
 	}, nil
 }
 
+// Schema retrieves the table schema for the given table name.
+// It takes the table name as an argument and returns the table schema as a types.Table object.
 func (m *MSSQL) Schema(table string) (types.Table, error) {
 	query := fmt.Sprintf(MSSQL_SCHEMA_QUERY, table)
 	rows, err := m.Client.Query(query)
@@ -95,6 +102,8 @@ func (m *MSSQL) Schema(table string) (types.Table, error) {
 	}, nil
 }
 
+// Tables lists the tables within the given database in a bigquery.
+// It takes the database name as an argument and returns a slice of table names.
 func (m *MSSQL) Tables(databaseName string) ([]string, error) {
 	query := fmt.Sprintf(MSSQL_TABLES_QUERY, databaseName)
 	rows, err := m.Client.Query(query)
@@ -122,9 +131,10 @@ func (m *MSSQL) Tables(databaseName string) ([]string, error) {
 	}
 
 	return tables, nil
-
 }
 
+// Execute executes the given SQL query and returns the result as JSON.
+// It takes the SQL query as an argument.
 func (m *MSSQL) Execute(query string) ([]byte, error) {
 	rows, err := m.Client.Query(query)
 	if err != nil {
@@ -174,32 +184,46 @@ func (m *MSSQL) Execute(query string) ([]byte, error) {
 	return jsonData, nil
 }
 
+// GenerateCreateTableQuery generates the SQL query for creating a table based on the given table definition.
+// It takes the table definition as an argument and returns the SQL query as a string.
 func (m *MSSQL) GenerateCreateTableQuery(table types.Table) string {
 	query := "CREATE TABLE [" + table.Name + "] ("
-	pk := ""
-	unique := ""
+	var pks []string
+	var uniques []string
+
 	for i, column := range table.Columns {
 		colType := strings.ToUpper(column.Type)
 		query += "[" + column.Name + "] " + colType
+
 		if column.AutoIncrement {
 			query += " IDENTITY(1,1)"
-		}
-		if column.IsPrimary {
-			pk = " PRIMARY KEY ([" + column.Name + "])"
 		}
 		if column.DefaultValue.Valid {
 			query += " DEFAULT (" + column.DefaultValue.String + ")"
 		}
-		if column.IsUnique.String == "YES" && !column.IsPrimary {
-			unique = ", UNIQUE ([" + column.Name + "])"
-		}
-		if column.IsNullable == "NO" && !column.IsPrimary {
+		if column.IsNullable == "NO" {
 			query += " NOT NULL"
+		}
+		if column.IsPrimary {
+			pks = append(pks, "["+column.Name+"]")
+		} else if column.IsUnique.String == "YES" {
+			uniques = append(uniques, "["+column.Name+"]")
 		}
 		if i < len(table.Columns)-1 {
 			query += ", "
 		}
 	}
-	query += pk + unique + ")"
+
+	if len(pks) > 0 {
+		query += ", PRIMARY KEY (" + strings.Join(pks, ", ") + ")"
+	}
+
+	if len(uniques) > 0 {
+		for _, unique := range uniques {
+			query += ", UNIQUE (" + unique + ")"
+		}
+	}
+
+	query += ");"
 	return query
 }

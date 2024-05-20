@@ -1,3 +1,10 @@
+## Integrating Xray with Amazon Redshift
+
+This file provides an example of how to use the Xray library to interact with a snowflake database in a Go application. The example demonstrates how to connect to the database, execute queries, retrieve table schemas, and generate SQL `CREATE TABLE` statements.
+
+
+
+
 ## Running a Snowflake Database with Xray
 
 1. To get your Snowflake database up and running with the Xray library, follow these steps:
