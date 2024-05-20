@@ -103,6 +103,21 @@ func toInterfaceSlice(strs []string) []interface{} {
 var shellCmd = &cobra.Command{
 	Use:   "shell",
 	Short: "Interact with databases",
+	Long: `
+	This command provides an interactive shell to execute SQL queries on various types of databases. 
+	It supports MySQL, PostgreSQL, MSSQL, Redshift, Bigquery and Snowflake. 
+	To use this command, you need to provide a configuration file with the --config flag or -c flag,
+	and a database type with the --type flag or -t flag. 
+
+	The configuration file should be in YAML format and contain the necessary database connection parameters 
+	such as host, username, database name, port, and SSL settings.
+
+	You can also control the verbosity of the command's output with the --verbose or -v flag. 
+	When the verbose mode is on, the command will log additional information about its operation.
+
+	In the interactive shell, you can type SQL queries and press Enter to execute them. 
+	The results will be displayed in the console. Type 'exit' to leave the shell`,
+	
 	Run: func(cmd *cobra.Command, args []string) {
 		// Set up logging
 		if !verbose {
