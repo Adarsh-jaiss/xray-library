@@ -1,0 +1,6 @@
+host: default-workgroup.609973658768.ap-south-1.redshift-serverless.amazonaws.com
+username: admin
+database: dev
+port: 5439
+ssl: require
+debug: true

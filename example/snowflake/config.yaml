@@ -1,0 +1,6 @@
+account: tvhcdje-pd56667
+username: jaizadarsh
+database: SNOWFLAKE_SAMPLE_DATA
+port: 443
+warehouse: COMPUTE_WH
+schema: TPCH_SF10

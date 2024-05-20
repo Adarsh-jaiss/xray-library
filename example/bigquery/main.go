@@ -11,8 +11,8 @@ import (
 // export GOOGLE_APPLICATION_CREDENTIALS=path/to/secret.json
 func main() {
 	config := &config.Config{
-		ProjectID:    "ProjectID",
-		DatabaseName: "DatabaseName",
+		ProjectID:    "textquery-379122",
+		DatabaseName: "bigquerytrends",
 	}
 
 	client, err := xray.NewClientWithConfig(config, types.BigQuery)

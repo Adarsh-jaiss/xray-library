@@ -1,0 +1,4 @@
+host: localhost
+username: sa
+database: master
+port: 14330
