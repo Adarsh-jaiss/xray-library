@@ -36,14 +36,4 @@ type Config struct {
 	// Debug is used to enable or disable debug mode.
 	Debug bool `yaml:"debug" pflag:",Debug mode"`
 
-	// Region is the AWS region.
-	Region string `yaml:"region" pflag:",AWS region"`
-
-	// AccountID is the AWS account ID.
-	AccountID string `yaml:"account_id" pflag:",AWS account ID"`
-
-	// SecretName is the AWS secret name.
-	SecretName string `yaml:"secret_name" pflag:",AWS secret name"`
 }
-
-
