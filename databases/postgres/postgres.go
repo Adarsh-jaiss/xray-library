@@ -65,7 +65,7 @@ func NewPostgresWithConfig(dbConfig *config.Config) (types.ISQL, error) {
 	DB_PASSWORD = os.Getenv(DB_PASSWORD)
 
 	dbtype := types.Postgres
-	db, err := sql.Open(dbtype.String(), fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", dbConfig.Host, dbConfig.Port, dbConfig.Username, DB_PASSWORD, dbConfig.DatabaseName, dbConfig.SSL))
+	db, err := sql.Open(dbtype.String(), fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", dbConfig.Host, dbConfig.Port, dbConfig.Username, DB_PASSWORD, dbConfig.Database, dbConfig.SSL))
 	if err != nil {
 		return nil, fmt.Errorf("database connecetion failed : %v", err)
 	}

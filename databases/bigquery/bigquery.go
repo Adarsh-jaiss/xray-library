@@ -43,7 +43,7 @@ func NewBigQueryWithConfig(cfg *config.Config) (types.ISQL, error) {
 	GOOGLE_APPLICATION_CREDENTIALS = os.Getenv(GOOGLE_APPLICATION_CREDENTIALS)
 
 	dbType := types.BigQuery
-	connectionString := fmt.Sprintf("bigquery://%s/%s", cfg.ProjectID, cfg.DatabaseName)
+	connectionString := fmt.Sprintf("bigquery://%s/%s", cfg.ProjectID, cfg.Database)
 	db, err := sql.Open(dbType.String(), connectionString)
 	if err != nil {
 		return nil, fmt.Errorf("database connecetion failed : %v", err)
@@ -99,7 +99,7 @@ func (b *BigQuery) Schema(table string) (types.Table, error) {
 	return types.Table{
 		Name:        table,
 		Columns:     columns,
-		Dataset:     b.Config.DatabaseName,
+		Dataset:     b.Config.Database,
 		ColumnCount: int64(len(columns)),
 	}, nil
 
@@ -252,4 +252,3 @@ func convertTypeToBigQuery(dataType string) string {
 		return dataType
 	}
 }
-

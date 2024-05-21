@@ -46,7 +46,7 @@ func NewRedshiftWithConfig(cfg *config.Config) (types.ISQL, error) {
 	}
 	DB_PASSWORD = os.Getenv(DB_PASSWORD)
 
-	dsn := fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", cfg.Host, cfg.Port, cfg.Username, DB_PASSWORD, cfg.DatabaseName, cfg.SSL)
+	dsn := fmt.Sprintf("host=%s port=%v user=%s password=%s dbname=%s sslmode=%s", cfg.Host, cfg.Port, cfg.Username, DB_PASSWORD, cfg.Database, cfg.SSL)
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("error creating a new session : %v", err)
@@ -119,7 +119,7 @@ func (r *Redshift) Tables(databaseName string) ([]string, error) {
 
 	for res.Next() {
 		var table types.TableResponse
-		if err := res.Scan(&table.DatabaseName, &table.SchemaName, &table.TableName, &table.TableType, &table.TableAcl, &table.Remarks); err != nil {
+		if err := res.Scan(&table.Database, &table.SchemaName, &table.TableName, &table.TableType, &table.TableAcl, &table.Remarks); err != nil {
 			return nil, fmt.Errorf("error scanning result: %v", err)
 		}
 		fmt.Println(table)
@@ -189,7 +189,7 @@ func (r *Redshift) Execute(query string) ([]byte, error) {
 // GenerateCreateTableQuery generates a CREATE TABLE query for Redshift.
 // It takes a Table struct as an argument and returns a string.
 func (r *Redshift) GenerateCreateTableQuery(table types.Table) string {
-	query := fmt.Sprintf("CREATE TABLE %s.%s.%s (", r.Config.DatabaseName, r.Config.Schema, table.Name)
+	query := fmt.Sprintf("CREATE TABLE %s.%s.%s (", r.Config.Database, r.Config.Schema, table.Name)
 	for i, column := range table.Columns {
 		colType := strings.ToUpper(column.Type)
 		query += column.Name + " " + convertTypeToRedshift(colType)

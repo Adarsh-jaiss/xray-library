@@ -13,7 +13,7 @@ type Config struct {
 	Username string `yaml:"username" pflag:",Database username"`
 
 	// DatabaseName is the name of the database.
-	DatabaseName string `yaml:"database" pflag:",Database name"`
+	Database string `yaml:"database" pflag:",Database name"`
 
 	// Port is the database port.
 	Port string `yaml:"port" pflag:",Database Port"`
@@ -35,5 +35,4 @@ type Config struct {
 
 	// Debug is used to enable or disable debug mode.
 	Debug bool `yaml:"debug" pflag:",Debug mode"`
-
 }

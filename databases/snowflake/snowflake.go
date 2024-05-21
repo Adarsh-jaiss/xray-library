@@ -51,7 +51,7 @@ func NewSnowflakeWithConfig(config *config.Config) (types.ISQL, error) {
 		User:         config.Username,
 		Password:     DB_PASSWORD,
 		Port:         port,
-		Database:     config.DatabaseName,
+		Database:     config.Database,
 		Warehouse:    config.Warehouse,
 		Schema:       config.Schema,
 		InsecureMode: true,

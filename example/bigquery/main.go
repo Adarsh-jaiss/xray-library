@@ -11,8 +11,8 @@ import (
 // export GOOGLE_APPLICATION_CREDENTIALS=path/to/secret.json
 func main() {
 	config := &config.Config{
-		ProjectID:    "textquery-379122",
-		DatabaseName: "bigquerytrends",
+		ProjectID: "textquery-379122",
+		Database:  "bigquerytrends",
 	}
 
 	client, err := xray.NewClientWithConfig(config, types.BigQuery)
@@ -21,7 +21,7 @@ func main() {
 	}
 	fmt.Println("Connected to database")
 
-	tables, err := client.Tables(config.DatabaseName)
+	tables, err := client.Tables(config.Database)
 	if err != nil {
 		panic(err)
 	}

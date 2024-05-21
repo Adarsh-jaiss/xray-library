@@ -18,7 +18,7 @@ Xray is a library that provides tools for inspecting and analyzing various types
    // Define your database configuration here
    dbConfig := &config.Config{
        Host:         "127.0.0.1",
-       DatabaseName: "employees",
+       Database: "employees",
        Username:     "root",
        Port:         "5432",
        SSL:          "disable",
@@ -38,7 +38,7 @@ Xray is a library that provides tools for inspecting and analyzing various types
 2. **Retrieve Table Names**
 
     ```go
-    data, err := client.Tables(dbConfig.DatabaseName)
+    data, err := client.Tables(dbConfig.Database)
     if err != nil {
         panic(err)
     }

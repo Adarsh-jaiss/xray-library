@@ -58,12 +58,12 @@ type Column struct {
 
 // TableResponse is the struct that holds the response from the Redshift Tables query.
 type TableResponse struct {
-	TableName    string         `json:"table_name"`    // TableName is the name of the table.
-	DatabaseName string         `json:"database_name"` // DatabaseName is the name of the database.
-	SchemaName   string         `json:"schema_name"`   // SchemaName is the name of the schema.
-	TableType    string         `json:"table_type"`    // TableType is the type of the table.
-	TableAcl     sql.NullString `json:"table_acl"`     // TableAcl is the access control list of the table.
-	Remarks      sql.NullString `json:"remarks"`       // Remarks is the remarks of the table.
+	TableName  string         `json:"table_name"`    // TableName is the name of the table.
+	Database   string         `json:"database_name"` // DatabaseName is the name of the database.
+	SchemaName string         `json:"schema_name"`   // SchemaName is the name of the schema.
+	TableType  string         `json:"table_type"`    // TableType is the type of the table.
+	TableAcl   sql.NullString `json:"table_acl"`     // TableAcl is the access control list of the table.
+	Remarks    sql.NullString `json:"remarks"`       // Remarks is the remarks of the table.
 }
 
 // QueryResult represents the result of a database query.

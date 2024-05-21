@@ -12,7 +12,7 @@ This guide demonstrates how to use the Xray library to inspect and execute queri
     ```go
     config := &config.Config{
         ProjectID:    "ProjectID",      // Replace with your BigQuery project ID
-        DatabaseName: "Database_Name",  // Replace with your BigQuery database name
+        Database: "Database_Name",  // Replace with your BigQuery database name
     }
 
     Ensure you replace `"ProjectID"`, , and `"Database_Name"` with your actual BigQuery project ID, and database name respectively.
@@ -33,7 +33,7 @@ This guide demonstrates how to use the Xray library to inspect and execute queri
     Retrieve a list of tables in the database and print their schemas:
 
     ```go
-    tables, err := client.Tables(config.DatabaseName)
+    tables, err := client.Tables(config.Database)
     if err != nil {
         panic(err)
     }

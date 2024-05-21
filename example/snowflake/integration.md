@@ -14,7 +14,7 @@ This guide demonstrates how to use the Xray library to inspect and execute queri
    config := &config.Config{
        Account:      "account",         // Replace with your Snowflake account name
        Username:     "Username",        // Replace with your Snowflake username
-       DatabaseName: "DatabaseName",    // Replace with your Snowflake database name
+       Database: "DatabaseName",    // Replace with your Snowflake database name
        Port:         "443",             // Snowflake port (default is 443)
        Warehouse:    "Warehouse_name",  // Replace with your Snowflake warehouse name
        Schema:       "Schema",          // Optional: Replace with your Snowflake schema name if applicable
@@ -37,7 +37,7 @@ This guide demonstrates how to use the Xray library to inspect and execute queri
     Retrieve a list of tables in the database and print their schemas:
 
         ```go
-        data, err := client.Tables(config.DatabaseName)
+        data, err := client.Tables(config.Database)
         if err != nil {
             panic(err)
         }

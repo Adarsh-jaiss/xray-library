@@ -15,7 +15,7 @@ This guide illustrates how to use the Xray library to inspect and execute querie
         Host:       "localhost",
         Username:     "sa",
         Port:         "14330",
-        DatabaseName: "master",
+        Database: "master",
     }
     ```
 
@@ -49,7 +49,7 @@ This guide illustrates how to use the Xray library to inspect and execute querie
     Retrieve a list of tables in the database and print their schemas:
 
     ```go
-    data, err := client.Tables(cfg.DatabaseName)
+    data, err := client.Tables(cfg.Database)
     if err != nil {
         panic(err)
     }

@@ -12,11 +12,11 @@ import (
 // export DB_PASSWORD=your_password
 func main() {
 	config := &config.Config{
-		Host:         "127.0.0.1",
-		DatabaseName: "employees",
-		Username:     "root",
-		Port:         "5432",
-		SSL:          "disable",
+		Host:     "127.0.0.1",
+		Database: "employees",
+		Username: "root",
+		Port:     "5432",
+		SSL:      "disable",
 	}
 	client, err := xray.NewClientWithConfig(config, types.Postgres)
 	if err != nil {
@@ -24,7 +24,7 @@ func main() {
 	}
 	fmt.Println("Connected to database")
 
-	data, err := client.Tables(config.DatabaseName)
+	data, err := client.Tables(config.Database)
 	if err != nil {
 		panic(err)
 	}

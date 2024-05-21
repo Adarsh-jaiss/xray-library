@@ -11,11 +11,11 @@ import (
 // export DB_PASSWORD=your_password
 func main() {
 	config := &config.Config{
-		Host:         "127.0.0.1",
-		DatabaseName: "employees",
-		Username:     "root",
-		Port:         "3306",
-		SSL:          "false",
+		Host:     "127.0.0.1",
+		Database: "employees",
+		Username: "root",
+		Port:     "3306",
+		SSL:      "false",
 	}
 	client, err := xray.NewClientWithConfig(config, types.MySQL)
 	if err != nil {
@@ -23,11 +23,11 @@ func main() {
 	}
 	fmt.Println("Connected to database")
 
-	data, err := client.Tables(config.DatabaseName)
+	data, err := client.Tables(config.Database)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Tables :",data)
+	fmt.Println("Tables :", data)
 	var response []types.Table
 	for _, v := range data {
 		table, err := client.Schema(v)

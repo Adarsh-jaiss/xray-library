@@ -1,7 +1,6 @@
 package main
 
 import (
-
 	"fmt"
 
 	_ "github.com/snowflakedb/gosnowflake"
@@ -13,12 +12,12 @@ import (
 // export DB Passowrd, Export root=DB_PASSWORD
 func main() {
 	config := &config.Config{
-		Account:      "tvhcdje-pd56667",
-		Username:     "jaizadarsh",
-		DatabaseName: "SNOWFLAKE_SAMPLE_DATA",
-		Port:         "443",
-		Warehouse:    "COMPUTE_WH",
-		Schema:       "TPCH_SF10", // optional
+		Account:   "tvhcdje-pd56667",
+		Username:  "jaizadarsh",
+		Database:  "SNOWFLAKE_SAMPLE_DATA",
+		Port:      "443",
+		Warehouse: "COMPUTE_WH",
+		Schema:    "TPCH_SF10", // optional
 	}
 
 	client, err := xray.NewClientWithConfig(config, types.Snowflake)
@@ -27,7 +26,7 @@ func main() {
 	}
 	fmt.Println("Connected to database")
 
-	data, err := client.Tables(config.DatabaseName)
+	data, err := client.Tables(config.Database)
 	if err != nil {
 		panic(err)
 	}

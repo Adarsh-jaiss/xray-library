@@ -258,7 +258,6 @@ func convertTypeToMysql(dataType string) string {
 	}
 }
 
-
 // Create a new MySQL connection URL with the given configuration.
 func dbURLMySQL(dbConfig *config.Config) string {
 	return fmt.Sprintf(
@@ -266,7 +265,7 @@ func dbURLMySQL(dbConfig *config.Config) string {
 		dbConfig.Username,
 		DB_PASSWORD,
 		dbConfig.Host,
-		dbConfig.DatabaseName,
+		dbConfig.Database,
 		dbConfig.SSL,
 	)
 }

@@ -7,15 +7,16 @@ import (
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
 )
+
 // export DB_PASSWORD=your_password
 func main() {
 	// Define the configuration for the Redshift instance
 	cfg := &config.Config{
-		Host:         "default-workgroup.609973658768.ap-south-1.redshift-serverless.amazonaws.com",
-		DatabaseName: "dev",
-		Username:     "admin",
-		Port:         "5439",
-		SSL:          "require",
+		Host:     "default-workgroup.609973658768.ap-south-1.redshift-serverless.amazonaws.com",
+		Database: "dev",
+		Username: "admin",
+		Port:     "5439",
+		SSL:      "require",
 	}
 
 	// Create a new Redshift instance
@@ -26,12 +27,12 @@ func main() {
 	}
 	fmt.Println("Connected to database")
 
-	tables, err := client.Tables(cfg.DatabaseName)
+	tables, err := client.Tables(cfg.Database)
 	if err != nil {
 		fmt.Printf("Error getting tables: %v\n", err)
 		return
 	}
-	fmt.Printf("Tables in database %s: %v\n", cfg.DatabaseName, tables)
+	fmt.Printf("Tables in database %s: %v\n", cfg.Database, tables)
 
 	var response []types.Table
 	for _, v := range tables {

@@ -16,10 +16,15 @@ Xray is a library that provides tools for inspecting and analyzing various types
     **Note : Set env variable DB_Password for adding password and pass your password as : `export DB_PASSWORD=your_password`**
 
    ```go
+   import (
+    "github.com/thesaas-company/xray/config"
+    "github.com/thesaas-company/xray/types"
+    "github.com/thesaas-company/xray"
+   )
    // Define your database configuration here
    dbConfig := &config.Config{
        Host:         "127.0.0.1",
-       DatabaseName: "employees",
+       Database: "employees",
        Username:     "root",
        Port:         "3306",
        SSL:          "false",
@@ -37,7 +42,7 @@ Xray is a library that provides tools for inspecting and analyzing various types
 2. **Retrieve Table Schema**
 
     ```go
-    data, err := client.Tables(dbConfig.DatabaseName)
+    data, err := client.Tables(dbConfig.Database)
     if err != nil {
         panic(err)
     }
@@ -77,26 +82,4 @@ Xray is a library that provides tools for inspecting and analyzing various types
         return
     }
     fmt.Printf("Query result: %s\n", string(result))
-  
 
-
-### Environment Variables
-
-- You can also configure the MySQL connection using environment variables. Set the following environment variables before running your application:
-
-```
-export DB_HOST=127.0.0.1
-export DB_NAME=employees
-export DB_USERNAME=root
-export DB_PORT=3306
-export DB_SSL=false
-```
-
-### Running the Application
-
-After setting up the configuration, run the following commands to execute the application:
-
-```
-go mod tidy
-go run main.go
-```

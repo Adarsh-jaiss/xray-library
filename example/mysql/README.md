@@ -13,6 +13,7 @@ docker run -d --name mysql-employees \
   -e MYSQL_ROOT_PASSWORD=college \
   genschsa/mysql-employees
 ```
+
 **NOTE** :Make sure to replace college with your desired password.
 
 #### Set Password in env variable
@@ -32,5 +33,5 @@ export DB_PASSWORD=college
 - Once you have the code, run the following commands:
 ```
 go mod tidy
-go run main.go
+go run example/mysql/main.go
 ```

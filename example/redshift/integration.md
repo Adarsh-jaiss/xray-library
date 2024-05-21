@@ -15,7 +15,7 @@ This guide illustrates how to use the Xray library to inspect and execute querie
         Username:     "admin",
 		Port:         "5439",
         SSL:          "require",    // 
-        DatabaseName: "my-database",   // Specify your Redshift database name
+        Database: "my-database",   // Specify your Redshift database name
     }
     ```
 
@@ -38,12 +38,12 @@ This guide illustrates how to use the Xray library to inspect and execute querie
     Retrieve a list of tables in the database and print their schemas:
 
     ```go
-    tables, err := client.Tables(cfg.DatabaseName)
+    tables, err := client.Tables(cfg.Database)
     if err != nil {
         fmt.Printf("Error getting tables: %v\n", err)
         return
     }
-    fmt.Printf("Tables in database %s: %v\n", cfg.DatabaseName, tables)
+    fmt.Printf("Tables in database %s: %v\n", cfg.Database, tables)
     var response []types.Table
     for _, v := range tables {
         table, err := client.Schema(v)
