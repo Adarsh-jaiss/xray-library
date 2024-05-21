@@ -117,7 +117,7 @@ var shellCmd = &cobra.Command{
 
 	In the interactive shell, you can type SQL queries and press Enter to execute them. 
 	The results will be displayed in the console. Type 'exit' to leave the shell`,
-	
+
 	Run: func(cmd *cobra.Command, args []string) {
 		// Set up logging
 		if !verbose {
@@ -165,6 +165,13 @@ var shellCmd = &cobra.Command{
 				fmt.Println("Exiting shell.")
 				break
 			}
+
+			// Check if the query is a PostgreSQL meta command
+			// Check if the query is a PostgreSQL meta command
+			if dbType == "postgres" {
+				query = PostgresMetaCommands(query)
+			}
+
 			b, err := db.Execute(query)
 			if err != nil {
 				fmt.Println("Error executing query:", err)
@@ -189,12 +196,17 @@ var shellCmd = &cobra.Command{
 				for i, v := range row {
 					switch value := v.(type) {
 					case string:
-						decodedValue, err := base64.StdEncoding.DecodeString(value)
-						if err != nil {
-							fmt.Println("Error decoding base64 value:", err)
-							stringRow[i] = value // Use original value if decoding fails
+						// Check if the string is base64 encoded
+						if isBase64(value) {
+							decodedValue, err := base64.StdEncoding.DecodeString(value)
+							if err != nil {
+								fmt.Println("Error decoding base64 value:", err)
+								stringRow[i] = value // Use original value if decoding fails
+							} else {
+								stringRow[i] = string(decodedValue)
+							}
 						} else {
-							stringRow[i] = string(decodedValue)
+							stringRow[i] = value
 						}
 					default:
 						stringRow[i] = fmt.Sprintf("%v", value)
@@ -207,6 +219,15 @@ var shellCmd = &cobra.Command{
 			fmt.Println(table.String())
 		}
 	},
+}
+
+// isBase64 checks if a string is base64 encoded
+func isBase64(s string) bool {
+	if len(s)%4 != 0 {
+		return false
+	}
+	_, err := base64.StdEncoding.DecodeString(s)
+	return err == nil
 }
 
 // Execute runs the command line interface.
@@ -243,4 +264,45 @@ func parseDbType(s string) xrayTypes.DbType {
 	default:
 		return xrayTypes.MySQL
 	}
+}
+
+// PostgresMetaCommands translates PostgreSQL meta commands to SQL queries
+func PostgresMetaCommands(query string) string {
+	switch query {
+	case "\\l":
+		return "SELECT datname FROM pg_database WHERE datistemplate = false;"
+	case "\\dt":
+		return "SELECT * FROM pg_catalog.pg_tables;"
+	case "\\d":
+		return "SELECT * FROM pg_catalog.pg_tables;"
+	case "\\c":
+		return "switch_database"
+	case "\\q":
+		return "exit"
+	case "\\?":
+		return "help"
+	case "\\h":
+		return "help"
+	case "\\du":
+		return "SELECT * FROM pg_catalog.pg_roles;"
+	case "\\conninfo":
+		return "SELECT * FROM pg_stat_activity WHERE pid = pg_backend_pid();"
+	default:
+		// Handle meta commands with parameters
+		if strings.HasPrefix(query, "\\c ") {
+			dbName := strings.TrimPrefix(query, "\\c ")
+			return fmt.Sprintf("switch_database %s", dbName)
+		} else if strings.HasPrefix(query, "\\d ") {
+			tableName := strings.TrimPrefix(query, "\\d ")
+			return fmt.Sprintf("SELECT * FROM %s;", tableName)
+		} else if strings.HasPrefix(query, "\\dn ") {
+			schemaName := strings.TrimPrefix(query, "\\dn ")
+			return fmt.Sprintf("SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname = '%s';", schemaName)
+		} else if strings.HasPrefix(query, "\\dp ") {
+			tableName := strings.TrimPrefix(query, "\\dp ")
+			return fmt.Sprintf("SELECT * FROM pg_catalog.pg_statio_all_tables WHERE relname = '%s';", tableName)
+		}
+	}
+	// If the query doesn't match any known meta commands, return it unchanged
+	return query
 }
