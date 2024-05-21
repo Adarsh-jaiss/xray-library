@@ -11,7 +11,20 @@ go get github.com/thesaas-company/xray@latest
 ## Docs
 
 - Official documentation : [Go Docs](https://pkg.go.dev/github.com/thesaas-company/xray)
-- Examples of different database integrations : [Example](./example)
+- Database integrations : 
+    - [MySQL](./example/mysql/integration.md)
+    - [Postgres](./example/postgres/integration.md)
+    - [redshift](./example/redshift/integration.md)
+    - [BigQuery](./example/bigquery/integration.md)
+    - [snowflake](./example/snowflake/integration.md)
+    - [mssql](./example/mssql/integration.md)
+- Database Example : 
+    - [MySQL](./example/mysql/README.md)
+    - [Postgres](./example/postgres/README.md)
+    - [redshift](./example/redshift/README.md)
+    - [BigQuery](./example/bigquery/README.md)
+    - [snowflake](./example/snowflake/README.md)
+    - [mssql](./example/mssql/README.md)
 
 ### Setting up the local development enviroment
 
@@ -27,7 +40,8 @@ go get github.com/thesaas-company/xray@latest
 ![5968364](https://github.com/Adarsh-jaiss/xray-library/assets/96974600/acae42cc-7da4-4b79-8aa7-c8d9547712dc)
 
 
-
+### Deployment
+- [Datasherlock](https://datasherlock.io)
 
 ## Show Your Support!
 
