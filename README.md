@@ -26,12 +26,19 @@ go get github.com/thesaas-company/xray@latest
     - [snowflake](./example/snowflake/README.md)
     - [mssql](./example/mssql/README.md)
 
-### Setting up the local development enviroment
+### Install xRay cli
 
-- Download go 1.22
-- Clone this repo 
-- Navigate to the `xray` directory.
-- Run this command to install the dependencies : `go mod install`
+
+#### Linux
+```
+curl -sL https://raw.githubusercontent.com/thesaas-company/xray/main/install.sh |  sudo bash -s -- -b /usr/local/bin
+```
+
+
+#### MacOS
+```
+brew install thesaas-company/homebrew-tap/xray
+```
 
 ### Supported Databases
 ![logo-mysql-170x115](https://github.com/Adarsh-jaiss/xray-library/assets/96974600/c63db1bf-5efe-4e44-a9fe-14862d467768) 
