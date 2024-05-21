@@ -70,7 +70,7 @@ brews:
     directory: Formula
 
     # Github repository to push the tap to.
-    tap:
+    repository:
       owner: thesaas-company
       name: homebrew-tap
 
