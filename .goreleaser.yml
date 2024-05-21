@@ -67,7 +67,7 @@ brews:
     # Default to project name
     name: xray
 
-    folder: Formula
+    directory: Formula
 
     # Github repository to push the tap to.
     tap:
