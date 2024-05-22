@@ -167,7 +167,6 @@ var shellCmd = &cobra.Command{
 			}
 
 			// Check if the query is a PostgreSQL meta command
-			// Check if the query is a PostgreSQL meta command
 			if dbType == "postgres" {
 				query = PostgresMetaCommands(query)
 			}

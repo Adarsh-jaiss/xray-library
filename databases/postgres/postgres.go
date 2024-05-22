@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -160,12 +161,23 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 		values := make([]interface{}, len(columns))
 		pointers := make([]interface{}, len(columns))
 		for i := range values {
-			//  create a slice of pointers to the values
 			pointers[i] = &values[i]
 		}
 
 		if err := rows.Scan(pointers...); err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		// Decode base64 data
+		for _, val := range values {
+			strVal, ok := val.(*string)
+			if ok && strVal != nil && isBase64(*strVal) {
+				decoded, err := base64.StdEncoding.DecodeString(*strVal)
+				if err != nil {
+					return nil, fmt.Errorf("error decoding base64 data: %v", err)
+				}
+				*strVal = string(decoded)
+			}
 		}
 
 		results = append(results, values)
@@ -187,6 +199,18 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 	}
 
 	return jsonData, nil
+}
+
+func isBase64(s string) bool {
+	if len(s)%4 != 0 {
+		return false
+	}
+	// Try to decode the string
+    _, err := base64.StdEncoding.DecodeString(s)
+    // If decoding succeeds, err will be nil, and the function will return true
+    // If decoding fails, err will not be nil, and the function will return false
+	// Also we do not have access to decoded value, so we are not using it
+	return err == nil
 }
 
 // Tables returns a list of all tables in the given database.
