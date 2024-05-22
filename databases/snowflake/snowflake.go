@@ -60,7 +60,6 @@ func NewSnowflakeWithConfig(config *config.Config) (types.ISQL, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating snowflake DSN: %v", err)
 	}
-	fmt.Println(dsn)
 	dbType := types.Snowflake
 	db, err := sql.Open(dbType.String(), dsn) // open a connection to the snowflake database
 	if err != nil {
