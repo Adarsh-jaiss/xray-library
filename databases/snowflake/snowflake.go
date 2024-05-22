@@ -2,6 +2,7 @@ package snowflake
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -177,6 +178,19 @@ func (s *Snowflake) Execute(query string) ([]byte, error) {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
+		// Decode base64 data
+		for i, val := range values {
+			strVal, ok := val.(string)
+			if ok && isBase64(strVal) {
+				// Redecode the value to get the decoded result
+				decoded, err := base64.StdEncoding.DecodeString(strVal)
+				if err != nil {
+					return nil, fmt.Errorf("error decoding base64 data: %v", err)
+				}
+				values[i] = string(decoded)
+			}
+		}
+
 		results = append(results, values)
 	}
 
@@ -197,6 +211,19 @@ func (s *Snowflake) Execute(query string) ([]byte, error) {
 	}
 
 	return jsonData, nil
+}
+
+// isBase64 checks if a string is a valid base64 string.
+func isBase64(s string) bool {
+	if len(s)%4 != 0 {
+		return false
+	}
+	// Try to decode the string
+	_, err := base64.StdEncoding.DecodeString(s)
+	// If decoding succeeds, err will be nil, and the function will return true
+	// If decoding fails, err will not be nil, and the function will return false
+	// Also we do not have access to decoded value, so we are not using it
+	return err == nil
 }
 
 // GenerateCreateTableQuery generates a CREATE TABLE query for Snowflake.
