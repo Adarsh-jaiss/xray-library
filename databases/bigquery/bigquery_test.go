@@ -132,7 +132,7 @@ func TestExecute(t *testing.T) {
 	}
 
 	// Unmarshal the JSON data
-	var result types.QueryResult
+	var result types.BigQueryResult
 	if err := json.Unmarshal(jsonData, &result); err != nil {
 		t.Errorf("error unmarshaling json: %s", err)
 	}
@@ -144,7 +144,10 @@ func TestExecute(t *testing.T) {
 	}
 
 	// Check if the returned rows match the expected rows
-	expectedRows := [][]interface{}{{"value1", "value2"}, {"value3", "value4"}}
+	expectedRows := []map[string]interface{}{
+		{"column1": "value1", "column2": "value2"},
+		{"column1": "value3", "column2": "value4"},
+	}
 	if !reflect.DeepEqual(result.Rows, expectedRows) {
 		t.Errorf("expected %v, got %v", expectedRows, result.Rows)
 	}
