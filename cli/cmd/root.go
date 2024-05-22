@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -9,6 +8,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/olekukonko/tablewriter"
+	"github.com/peterh/liner"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/thesaas-company/xray"
@@ -22,6 +23,7 @@ var (
 	verbose bool
 	cfgFile string
 	dbType  string
+	query   string
 )
 
 // QueryResult represents the result of a database query.
@@ -30,73 +32,6 @@ type QueryResult struct {
 	Rows    [][]interface{} `json:"rows"`
 	Time    float64         `json:"time"`
 	Error   string          `json:"error"`
-}
-
-// Table represents a table with headers and rows.
-type Table struct {
-	headers []string
-	rows    [][]string
-}
-
-// NewTable creates a new Table with the given headers.
-func NewTable(headers []string) *Table {
-	return &Table{headers: headers}
-}
-
-// AddRow adds a row to the table.
-func (t *Table) AddRow(row []string) {
-	t.rows = append(t.rows, row)
-}
-
-// String returns a string representation of the table.
-func (t *Table) String() string {
-	// Find the maximum width of each column
-	columnWidths := make([]int, len(t.headers))
-	for i, header := range t.headers {
-		columnWidths[i] = len(header)
-	}
-	for _, row := range t.rows {
-		for i, cell := range row {
-			if len(cell) > columnWidths[i] {
-				columnWidths[i] = len(cell)
-			}
-		}
-	}
-
-	// Create a format string based on the column widths
-	var formatBuilder strings.Builder
-	for _, width := range columnWidths {
-		formatBuilder.WriteString(fmt.Sprintf("%%-%ds ", width))
-	}
-	formatString := formatBuilder.String()
-
-	// Print the headers
-	var result strings.Builder
-	result.WriteString(fmt.Sprintf(formatString, toInterfaceSlice(t.headers)...))
-	result.WriteRune('\n')
-
-	// Print a separator line
-	for _, width := range columnWidths {
-		result.WriteString(strings.Repeat("-", width) + " ")
-	}
-	result.WriteRune('\n')
-
-	// Print the rows
-	for _, row := range t.rows {
-		result.WriteString(fmt.Sprintf(formatString, toInterfaceSlice(row)...))
-		result.WriteRune('\n')
-	}
-
-	return result.String()
-}
-
-// toInterfaceSlice converts a slice of strings to a slice of interfaces.
-func toInterfaceSlice(strs []string) []interface{} {
-	result := make([]interface{}, len(strs))
-	for i, s := range strs {
-		result[i] = s
-	}
-	return result
 }
 
 // Command for interacting with databases
@@ -119,6 +54,7 @@ var shellCmd = &cobra.Command{
 	The results will be displayed in the console. Type 'exit' to leave the shell`,
 
 	Run: func(cmd *cobra.Command, args []string) {
+
 		// Set up logging
 		if !verbose {
 			logrus.SetOutput(io.Discard)
@@ -152,82 +88,88 @@ var shellCmd = &cobra.Command{
 
 		fmt.Println("Welcome to database shell!")
 
-		reader := bufio.NewReader(os.Stdin)
-		for {
-			fmt.Print("> ")
-			query, err := reader.ReadString('\n')
-			if err != nil {
-				fmt.Println("Error reading query:", err)
-				continue
+		if len(query) > 0 {
+			if err := queryExecute(query, db); err != nil {
+				fmt.Println(err)
+				return
 			}
-			query = strings.TrimSpace(query)
-			if query == "exit" {
-				fmt.Println("Exiting shell.")
-				break
-			}
+		} else {
+			line := liner.NewLiner()
+			defer line.Close()
 
-			// Check if the query is a PostgreSQL meta command
-			// Check if the query is a PostgreSQL meta command
-			if dbType == "postgres" {
-				query = PostgresMetaCommands(query)
-			}
+			for {
+				line.SetCtrlCAborts(true)
 
-			b, err := db.Execute(query)
-			if err != nil {
-				fmt.Println("Error executing query:", err)
-				continue
-			}
-
-			var result QueryResult
-			err = json.Unmarshal(b, &result)
-			if err != nil {
-				fmt.Println("Error parsing query result:", err)
-				continue
-			}
-
-			if len(result.Rows) == 0 {
-				fmt.Println("No results found.")
-				continue
-			}
-
-			table := NewTable(result.Columns)
-			for _, row := range result.Rows {
-				stringRow := make([]string, len(row))
-				for i, v := range row {
-					switch value := v.(type) {
-					case string:
-						// Check if the string is base64 encoded
-						if isBase64(value) {
-							decodedValue, err := base64.StdEncoding.DecodeString(value)
-							if err != nil {
-								fmt.Println("Error decoding base64 value:", err)
-								stringRow[i] = value // Use original value if decoding fails
-							} else {
-								stringRow[i] = string(decodedValue)
-							}
-						} else {
-							stringRow[i] = value
-						}
-					default:
-						stringRow[i] = fmt.Sprintf("%v", value)
+				query, err := line.Prompt("> ")
+				if err != nil {
+					if err == liner.ErrPromptAborted {
+						fmt.Println("Exiting shell.")
+					} else {
+						fmt.Println("Error reading query:", err)
 					}
+					break
 				}
-				table.AddRow(stringRow)
-			}
 
-			// Print the table
-			fmt.Println(table.String())
+				if query == "exit" {
+					fmt.Println("Exiting shell.")
+					break
+				}
+
+				if err := queryExecute(query, db); err != nil {
+					fmt.Println("Error executing query:", err)
+				}
+
+				line.AppendHistory(query)
+			}
 		}
+
 	},
 }
 
-// isBase64 checks if a string is base64 encoded
-func isBase64(s string) bool {
-	if len(s)%4 != 0 {
-		return false
+func queryExecute(query string, db xrayTypes.ISQL) error {
+
+	b, err := db.Execute(strings.TrimSpace(query))
+	if err != nil {
+		fmt.Println("Error executing query:", err)
+		return fmt.Errorf("error executing query result: %s", err)
 	}
-	_, err := base64.StdEncoding.DecodeString(s)
-	return err == nil
+
+	var result QueryResult
+	err = json.Unmarshal(b, &result)
+	if err != nil {
+		return fmt.Errorf("error parsing query result: %s", err)
+	}
+
+	if len(result.Rows) == 0 {
+
+		return fmt.Errorf("no results found")
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(result.Columns)
+	for _, row := range result.Rows {
+		stringRow := make([]string, len(row))
+		for i, v := range row {
+			switch value := v.(type) {
+			case string:
+				decodedValue, err := base64.StdEncoding.DecodeString(value)
+				if err != nil {
+					fmt.Println("Error decoding base64 value:", err)
+					stringRow[i] = value // Use original value if decoding fails
+				} else {
+					stringRow[i] = string(decodedValue)
+				}
+			default:
+				stringRow[i] = fmt.Sprintf("%v", value)
+			}
+		}
+
+		table.Append(stringRow)
+	}
+
+	// Print the table
+	table.Render()
+	return nil
 }
 
 // Execute runs the command line interface.
@@ -238,6 +180,7 @@ func Execute() {
 	shellCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 	shellCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config.yaml")
 	shellCmd.PersistentFlags().StringVarP(&dbType, "type", "t", "mysql", "Database type like mysql, postgres, bigquery")
+	shellCmd.PersistentFlags().StringVarP(&query, "query", "q", "", "Database query")
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 	}
@@ -264,45 +207,4 @@ func parseDbType(s string) xrayTypes.DbType {
 	default:
 		return xrayTypes.MySQL
 	}
-}
-
-// PostgresMetaCommands translates PostgreSQL meta commands to SQL queries
-func PostgresMetaCommands(query string) string {
-	switch query {
-	case "\\l":
-		return "SELECT datname FROM pg_database WHERE datistemplate = false;"
-	case "\\dt":
-		return "SELECT * FROM pg_catalog.pg_tables;"
-	case "\\d":
-		return "SELECT * FROM pg_catalog.pg_tables;"
-	case "\\c":
-		return "switch_database"
-	case "\\q":
-		return "exit"
-	case "\\?":
-		return "help"
-	case "\\h":
-		return "help"
-	case "\\du":
-		return "SELECT * FROM pg_catalog.pg_roles;"
-	case "\\conninfo":
-		return "SELECT * FROM pg_stat_activity WHERE pid = pg_backend_pid();"
-	default:
-		// Handle meta commands with parameters
-		if strings.HasPrefix(query, "\\c ") {
-			dbName := strings.TrimPrefix(query, "\\c ")
-			return fmt.Sprintf("switch_database %s", dbName)
-		} else if strings.HasPrefix(query, "\\d ") {
-			tableName := strings.TrimPrefix(query, "\\d ")
-			return fmt.Sprintf("SELECT * FROM %s;", tableName)
-		} else if strings.HasPrefix(query, "\\dn ") {
-			schemaName := strings.TrimPrefix(query, "\\dn ")
-			return fmt.Sprintf("SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname = '%s';", schemaName)
-		} else if strings.HasPrefix(query, "\\dp ") {
-			tableName := strings.TrimPrefix(query, "\\dp ")
-			return fmt.Sprintf("SELECT * FROM pg_catalog.pg_statio_all_tables WHERE relname = '%s';", tableName)
-		}
-	}
-	// If the query doesn't match any known meta commands, return it unchanged
-	return query
 }
