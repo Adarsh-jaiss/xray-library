@@ -74,6 +74,13 @@ type QueryResult struct {
 	Error   string          `json:"error"`   // Error is any error that occurred while executing the query.
 }
 
+type BigQueryResult struct {
+    Columns []string                 `json:"columns"` // Columns are the names of the columns in the result.
+    Rows    []map[string]interface{} `json:"rows"`    // Rows are the rows in the result.
+    Time    int64                    `json:"time"`    // Time is the time it took to execute the query.
+    Error   string                   `json:"error"`   // Error is any error that occurred while executing the query.
+}
+
 // DbType represents a type of SQL database.
 type DbType int
 
