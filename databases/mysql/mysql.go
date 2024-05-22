@@ -7,8 +7,6 @@ import (
 	"os"
 	"strings"
 
-	"encoding/base64"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
@@ -137,20 +135,21 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		// Decode base64 data
-		for i, val := range values {
-			strVal, ok := val.(string)
-			if ok && isBase64(strVal) {
-				// Redecode the value to get the decoded result
-				decoded, err := base64.StdEncoding.DecodeString(strVal)
-				if err != nil {
-					return nil, fmt.Errorf("error decoding base64 data: %v", err)
-				}
-				values[i] = string(decoded)
+		// Convert the values to the appropriate types
+		stringRow := make([]interface{}, len(values))
+		for i, v := range values {
+			switch value := v.(type) {
+			case []byte:
+				stringRow[i] = string(value)
+			case string:
+				stringRow[i] = value
+			default:
+				stringRow[i] = fmt.Sprintf("%v", value)
 			}
 		}
 
-		results = append(results, values)
+		// Append the modified row to the results
+		results = append(results, stringRow)
 	}
 
 	// Check for errors from iterating over rows
@@ -169,19 +168,6 @@ func (m *MySQL) Execute(query string) ([]byte, error) {
 	}
 
 	return jsonData, nil
-}
-
-// isBase64 checks if a string is a valid base64 string.
-func isBase64(s string) bool {
-	if len(s)%4 != 0 {
-		return false
-	}
-	// Try to decode the string
-    _, err := base64.StdEncoding.DecodeString(s)
-    // If decoding succeeds, err will be nil, and the function will return true
-    // If decoding fails, err will not be nil, and the function will return false
-	// Also we do not have access to decoded value, so we are not using it
-	return err == nil
 }
 
 // Tables retrieves the list of tables in the given database.

@@ -170,18 +170,29 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 		}
 
 		// Decode base64 data
-		for _, val := range values {
-			strVal, ok := val.(*string)
-			if ok && strVal != nil && isBase64(*strVal) {
-				decoded, err := base64.StdEncoding.DecodeString(*strVal)
-				if err != nil {
-					return nil, fmt.Errorf("error decoding base64 data: %v", err)
+		stringRow := make([]interface{}, len(values))
+		for i, val := range values {
+			switch v := val.(type) {
+			case []byte:
+				strVal := string(v)
+				if isBase64(strVal) {
+					decoded, err := base64.StdEncoding.DecodeString(strVal)
+					if err != nil {
+						return nil, fmt.Errorf("error decoding base64 data: %v", err)
+					}
+					stringRow[i] = string(decoded)
+				} else {
+					stringRow[i] = strVal
 				}
-				*strVal = string(decoded)
+			case string:
+				stringRow[i] = v
+			case nil:
+				stringRow[i] = nil
+			default:
+				stringRow[i] = fmt.Sprintf("%v", v)
 			}
 		}
-
-		results = append(results, values)
+		results = append(results, stringRow)
 	}
 
 	// Check for errors from iterating over rows
@@ -203,15 +214,12 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 }
 
 func isBase64(s string) bool {
-	if len(s)%4 != 0 {
+	decoded, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
 		return false
 	}
-	// Try to decode the string
-    _, err := base64.StdEncoding.DecodeString(s)
-    // If decoding succeeds, err will be nil, and the function will return true
-    // If decoding fails, err will not be nil, and the function will return false
-	// Also we do not have access to decoded value, so we are not using it
-	return err == nil
+	encoded := base64.StdEncoding.EncodeToString(decoded)
+	return s == encoded
 }
 
 // Tables returns a list of all tables in the given database.
