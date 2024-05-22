@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -137,6 +138,7 @@ func (p *Postgres) Schema(table string) (types.Table, error) {
 // It returns an error if the SQL query fails.
 func (p *Postgres) Execute(query string) ([]byte, error) {
 	// execute the sql statement
+	query = PostgresMetaCommands(query)
 	rows, err := p.Client.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
@@ -160,12 +162,23 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 		values := make([]interface{}, len(columns))
 		pointers := make([]interface{}, len(columns))
 		for i := range values {
-			//  create a slice of pointers to the values
 			pointers[i] = &values[i]
 		}
 
 		if err := rows.Scan(pointers...); err != nil {
 			return nil, fmt.Errorf("error scanning row: %v", err)
+		}
+
+		// Decode base64 data
+		for _, val := range values {
+			strVal, ok := val.(*string)
+			if ok && strVal != nil && isBase64(*strVal) {
+				decoded, err := base64.StdEncoding.DecodeString(*strVal)
+				if err != nil {
+					return nil, fmt.Errorf("error decoding base64 data: %v", err)
+				}
+				*strVal = string(decoded)
+			}
 		}
 
 		results = append(results, values)
@@ -187,6 +200,18 @@ func (p *Postgres) Execute(query string) ([]byte, error) {
 	}
 
 	return jsonData, nil
+}
+
+func isBase64(s string) bool {
+	if len(s)%4 != 0 {
+		return false
+	}
+	// Try to decode the string
+    _, err := base64.StdEncoding.DecodeString(s)
+    // If decoding succeeds, err will be nil, and the function will return true
+    // If decoding fails, err will not be nil, and the function will return false
+	// Also we do not have access to decoded value, so we are not using it
+	return err == nil
 }
 
 // Tables returns a list of all tables in the given database.
@@ -269,4 +294,44 @@ func TableToString(t types.Table) string {
 		strings.Join(cols, "; "),
 		t.ColumnCount,
 	)
+}
+
+func PostgresMetaCommands(query string) string {
+	switch query {
+	case "\\l":
+		return "SELECT datname FROM pg_database WHERE datistemplate = false;"
+	case "\\dt":
+		return "SELECT * FROM pg_catalog.pg_tables;"
+	case "\\d":
+		return "SELECT * FROM pg_catalog.pg_tables;"
+	case "\\c":
+		return "switch_database"
+	case "\\q":
+		return "exit"
+	case "\\?":
+		return "help"
+	case "\\h":
+		return "help"
+	case "\\du":
+		return "SELECT * FROM pg_catalog.pg_roles;"
+	case "\\conninfo":
+		return "SELECT * FROM pg_stat_activity WHERE pid = pg_backend_pid();"
+	default:
+		// Handle meta commands with parameters
+		if strings.HasPrefix(query, "\\c ") {
+			dbName := strings.TrimPrefix(query, "\\c ")
+			return fmt.Sprintf("switch_database %s", dbName)
+		} else if strings.HasPrefix(query, "\\d ") {
+			tableName := strings.TrimPrefix(query, "\\d ")
+			return fmt.Sprintf("SELECT * FROM %s;", tableName)
+		} else if strings.HasPrefix(query, "\\dn ") {
+			schemaName := strings.TrimPrefix(query, "\\dn ")
+			return fmt.Sprintf("SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname = '%s';", schemaName)
+		} else if strings.HasPrefix(query, "\\dp ") {
+			tableName := strings.TrimPrefix(query, "\\dp ")
+			return fmt.Sprintf("SELECT * FROM pg_catalog.pg_statio_all_tables WHERE relname = '%s';", tableName)
+		}
+	}
+	// If the query doesn't match any known meta commands, return it unchanged
+	return query
 }

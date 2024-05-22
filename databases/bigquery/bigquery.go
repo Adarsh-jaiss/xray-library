@@ -125,7 +125,7 @@ func (b *BigQuery) Execute(query string) ([]byte, error) {
 	}
 
 	// Scan the result into a slice of slices
-	var results [][]interface{}
+	var results []map[string]interface{}
 	for rows.Next() {
 		// create a slice of values and pointers
 		values := make([]interface{}, len(columns))
@@ -139,7 +139,24 @@ func (b *BigQuery) Execute(query string) ([]byte, error) {
 			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
-		results = append(results, values)
+		// Create a map for the current row
+        rowMap := make(map[string]interface{})
+        for i, colName := range columns {
+            // If the value is of type []byte (which is used for RECORD data types), 
+            // we attempt to unmarshal it into a map[string]interface{}
+            if b, ok := values[i].([]byte); ok {
+                var m map[string]interface{}
+                if err := json.Unmarshal(b, &m); err == nil {
+                    rowMap[colName] = m
+                } else {
+                    rowMap[colName] = values[i]
+                }
+            } else {
+                rowMap[colName] = values[i]
+            }
+        }
+
+		results = append(results, rowMap)
 	}
 
 	// Check for errors from iterating over rows
@@ -148,7 +165,7 @@ func (b *BigQuery) Execute(query string) ([]byte, error) {
 	}
 
 	// Convert the result to JSON
-	queryResult := types.QueryResult{
+	queryResult := types.BigQueryResult{
 		Columns: columns,
 		Rows:    results,
 	}
