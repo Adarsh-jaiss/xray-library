@@ -183,7 +183,7 @@ func TestGenerateCreateTableQuery(t *testing.T) {
 
 	fmt.Printf("Create table query: %v\n", query)
 
-	expectedQuery := `CREATE TABLE ..user (id INT PRIMARY KEY IDENTITY({0 false}, {0 false}) NOT NULL, name VARCHAR(255) NOT NULL, age INT);`
+	expectedQuery := `CREATE TABLE ..user (id INTEGER PRIMARY KEY IDENTITY({0 false}, {0 false}) NOT NULL, name VARCHAR(255) NOT NULL, age INTEGER);`
 	if query != expectedQuery {
 		t.Errorf("Expected '%s', but got '%s'", expectedQuery, query)
 	}
