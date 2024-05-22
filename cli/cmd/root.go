@@ -25,13 +25,60 @@ var (
 	query   string
 )
 
-// QueryResult represents the result of a database query.
+type QueryResultInterface interface {
+	GetColumns() []string
+	GetRows() interface{}
+	GetTime() float64
+	GetError() string
+}
+
 type QueryResult struct {
 	Columns []string        `json:"columns"`
 	Rows    [][]interface{} `json:"rows"`
 	Time    float64         `json:"time"`
 	Error   string          `json:"error"`
 }
+
+func (q QueryResult) GetColumns() []string {
+	return q.Columns
+}
+
+func (q QueryResult) GetRows() interface{} {
+	return q.Rows
+}
+
+func (q QueryResult) GetTime() float64 {
+	return q.Time
+}
+
+func (q QueryResult) GetError() string {
+	return q.Error
+}
+
+type BigQueryResult struct {
+	Columns []string                 `json:"columns"`
+	Rows    []map[string]interface{} `json:"rows"`
+	Time    int64                    `json:"time"`
+	Error   string                   `json:"error"`
+}
+
+func (b BigQueryResult) GetColumns() []string {
+	return b.Columns
+}
+
+func (b BigQueryResult) GetRows() interface{} {
+	return b.Rows
+}
+
+func (b BigQueryResult) GetTime() float64 {
+	return float64(b.Time)
+}
+
+func (b BigQueryResult) GetError() string {
+	return b.Error
+}
+
+// QueryResult represents the result of a database query.
 
 // Command for interacting with databases
 var shellCmd = &cobra.Command{
@@ -133,26 +180,44 @@ func queryExecute(query string, db xrayTypes.ISQL) error {
 		return fmt.Errorf("error executing query result: %s", err)
 	}
 
-	var result QueryResult
-	err = json.Unmarshal(b, &result)
+	var result QueryResultInterface
+	if dbType == "bigquery" {
+		result = &BigQueryResult{}
+	} else {
+		result = &QueryResult{}
+	}
+
+	err = json.Unmarshal(b, result)
 	if err != nil {
 		return fmt.Errorf("error parsing query result: %s", err)
 	}
 
-	if len(result.Rows) == 0 {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader(result.GetColumns()) // Assert the type of result and call GetColumns() instead of Columns
+	switch rows := result.GetRows().(type) {
+	case [][]interface{}:
+		for _, row := range rows {
+			stringRow := make([]string, len(row))
+			for i, v := range row {
+				stringRow[i] = fmt.Sprintf("%v", v)
+			}
 
-		return fmt.Errorf("no results found")
+			table.Append(stringRow)
+		}
+	case []map[string]interface{}:
+		for _, rowMap := range rows {
+			var stringRow []string
+			for _, v := range rowMap {
+				stringRow = append(stringRow, fmt.Sprintf("%v", v))
+			}
+			table.Append(stringRow)
+		}
+	default:
+		return fmt.Errorf("unexpected type of rows: %T", rows)
 	}
 
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader(result.Columns)
-	for _, row := range result.Rows {
-		stringRow := make([]string, len(row))
-		for i, v := range row {
-			stringRow[i] = fmt.Sprintf("%v", v)
-		}
-
-		table.Append(stringRow)
+	if table.NumLines() == 0 {
+		return fmt.Errorf("no results found")
 	}
 
 	// Print the table
