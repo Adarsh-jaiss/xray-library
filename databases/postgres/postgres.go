@@ -138,6 +138,7 @@ func (p *Postgres) Schema(table string) (types.Table, error) {
 // It returns an error if the SQL query fails.
 func (p *Postgres) Execute(query string) ([]byte, error) {
 	// execute the sql statement
+	query = PostgresMetaCommands(query)
 	rows, err := p.Client.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error executing sql statement: %v", err)
@@ -293,4 +294,44 @@ func TableToString(t types.Table) string {
 		strings.Join(cols, "; "),
 		t.ColumnCount,
 	)
+}
+
+func PostgresMetaCommands(query string) string {
+	switch query {
+	case "\\l":
+		return "SELECT datname FROM pg_database WHERE datistemplate = false;"
+	case "\\dt":
+		return "SELECT * FROM pg_catalog.pg_tables;"
+	case "\\d":
+		return "SELECT * FROM pg_catalog.pg_tables;"
+	case "\\c":
+		return "switch_database"
+	case "\\q":
+		return "exit"
+	case "\\?":
+		return "help"
+	case "\\h":
+		return "help"
+	case "\\du":
+		return "SELECT * FROM pg_catalog.pg_roles;"
+	case "\\conninfo":
+		return "SELECT * FROM pg_stat_activity WHERE pid = pg_backend_pid();"
+	default:
+		// Handle meta commands with parameters
+		if strings.HasPrefix(query, "\\c ") {
+			dbName := strings.TrimPrefix(query, "\\c ")
+			return fmt.Sprintf("switch_database %s", dbName)
+		} else if strings.HasPrefix(query, "\\d ") {
+			tableName := strings.TrimPrefix(query, "\\d ")
+			return fmt.Sprintf("SELECT * FROM %s;", tableName)
+		} else if strings.HasPrefix(query, "\\dn ") {
+			schemaName := strings.TrimPrefix(query, "\\dn ")
+			return fmt.Sprintf("SELECT nspname FROM pg_catalog.pg_namespace WHERE nspname = '%s';", schemaName)
+		} else if strings.HasPrefix(query, "\\dp ") {
+			tableName := strings.TrimPrefix(query, "\\dp ")
+			return fmt.Sprintf("SELECT * FROM pg_catalog.pg_statio_all_tables WHERE relname = '%s';", tableName)
+		}
+	}
+	// If the query doesn't match any known meta commands, return it unchanged
+	return query
 }
