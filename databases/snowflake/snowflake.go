@@ -178,19 +178,29 @@ func (s *Snowflake) Execute(query string) ([]byte, error) {
 		}
 
 		// Decode base64 data
+		stringRow := make([]interface{}, len(values))
 		for i, val := range values {
-			strVal, ok := val.(string)
-			if ok && isBase64(strVal) {
-				// Redecode the value to get the decoded result
-				decoded, err := base64.StdEncoding.DecodeString(strVal)
-				if err != nil {
-					return nil, fmt.Errorf("error decoding base64 data: %v", err)
+			switch v := val.(type) {
+			case []byte:
+				strVal := string(v)
+				if isBase64(strVal) {
+					decoded, err := base64.StdEncoding.DecodeString(strVal)
+					if err != nil {
+						return nil, fmt.Errorf("error decoding base64 data: %v", err)
+					}
+					stringRow[i] = string(decoded)
+				} else {
+					stringRow[i] = strVal
 				}
-				values[i] = string(decoded)
+			case string:
+				stringRow[i] = v
+			case nil:
+				stringRow[i] = nil
+			default:
+				stringRow[i] = fmt.Sprintf("%v", v)
 			}
 		}
-
-		results = append(results, values)
+		results = append(results, stringRow)
 	}
 
 	// Check for errors from iterating over rows
