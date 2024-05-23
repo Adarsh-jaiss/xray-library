@@ -27,35 +27,38 @@ func MockDB() (*sql.DB, sqlmock.Sqlmock) {
 // It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
 // It then asserts the expected return values and checks if the method was called with the correct arguments.
 func TestSchema(t *testing.T) {
-	db, mock := MockDB() // create a new mock database connection
+	// create a new mock database connection
+	db, mock := MockDB()
 	defer func() {
 		if err := db.Close(); err != nil {
 			fmt.Println(err)
 		}
-	}() // close the connection when the function returns
+	}()
 
-	tableName := "user"                                                                                                                               // table name to be used in the test
-	mockRows := sqlmock.NewRows([]string{"Field", "Type", "Null", "Key", "Default", "Extra"}).AddRow("id", "int", "NO", "PRI", nil, "auto_increment") // mock rows to be returned by the query
+	table_name := "user" // table name to be used in the test
 
-	mock.ExpectQuery(regexp.QuoteMeta(fmt.Sprintf(BigQuery_SCHEMA_QUERY, tableName))).WillReturnRows(mockRows) // set the expected return values for the query
+	// mock rows to be returned by the query
+	columns := []string{"column", "type"}
+	mockRows := sqlmock.NewRows(columns).AddRow("id", "int").AddRow("name", "varchar")
+	// set the expected return values for the query
+	expectedQuery := fmt.Sprintf("SELECT column_name, data_type FROM %s.INFORMATION_SCHEMA.COLUMNS WHERE table_name='%s'", "", table_name)
+	mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(mockRows)
 
-	// we then create a new instance of our BigQuery object and test the function
-	m, err := NewBigQuery(db)
+	// we then create a new instance of our Redshift object and test the function
+	b, err := NewBigQuery(db)
 	if err != nil {
-		t.Errorf("error initialising bigquery: %s", err)
+		t.Errorf("error initialising redshift: %s", err)
 	}
-	response, err := m.Schema(tableName) // call the Schema method
+	response, err := b.Schema(table_name) // call the Schema method
 	if err != nil {
-		t.Errorf("error executing query: %s", err)
+		t.Errorf("error executing query : %v", err)
 	}
 
-	fmt.Printf("Table schema : %+v\n", response)
+	fmt.Printf("Table schema: %+v\n", response)
 
-	// we make sure that all expectations were met, otherwise an error will be reported
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("there were unfulfilled expectations: %s", err)
+		t.Errorf("there was unfulfilled expectations: %s", err)
 	}
-
 }
 
 // TestTables is a unit test function that tests the Tables method of the BigQuery struct.
@@ -94,7 +97,6 @@ func TestTables(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 }
-
 
 // TestExecute is a unit test function that tests the Execute method of the BigQuery struct.
 // It creates a mock instance of BigQuery, sets the expected return values, and calls the method under test.
