@@ -15,7 +15,7 @@ import (
 var GOOGLE_APPLICATION_CREDENTIALS = "GOOGLE_APPLICATION_CREDENTIALS"
 
 const (
-	BigQuery_SCHEMA_QUERY = "SELECT * FROM %s LIMIT 1"
+	BigQuery_SCHEMA_QUERY = "SELECT column_name, data_type FROM %s.INFORMATION_SCHEMA.COLUMNS WHERE table_name='%s'"
 	BigQuery_TABLES_QUERY = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = '%s'"
 )
 
@@ -58,9 +58,8 @@ func NewBigQueryWithConfig(cfg *config.Config) (types.ISQL, error) {
 // this function extarcts the schema of a table in BigQuery.
 // It takes table name as input and returns a Table struct and an error.
 func (b *BigQuery) Schema(table string) (types.Table, error) {
-
 	// execute the sql statement
-	rows, err := b.Client.Query(fmt.Sprintf(BigQuery_SCHEMA_QUERY, table))
+	rows, err := b.Client.Query(fmt.Sprintf(BigQuery_SCHEMA_QUERY, b.Config.Database, table))
 	if err != nil {
 		return types.Table{}, fmt.Errorf("error executing sql statement: %v", err)
 	}
@@ -71,27 +70,11 @@ func (b *BigQuery) Schema(table string) (types.Table, error) {
 		}
 	}()
 
-	// scanning the result into a variable and append it into a the slice
 	var columns []types.Column
-	columnNames, err := rows.Columns()
-	if err != nil {
-		return types.Table{}, fmt.Errorf("error getting column names: %v", err)
-	}
-	columnTypes, err := rows.ColumnTypes()
-	if err != nil {
-		return types.Table{}, fmt.Errorf("error getting column types: %v", err)
-	}
-	for i, name := range columnNames {
+	for rows.Next() {
 		var column types.Column
-		column.Name = name
-		column.Type = columnTypes[i].DatabaseTypeName()
-		var ISNullable, _ = columnTypes[i].Nullable()
-		column.IsNullable = fmt.Sprintf("%v", ISNullable)
-		var length int64
-		length, _ = columnTypes[i].Length()
-		column.CharacterMaximumLength = sql.NullInt64{
-			Int64: length,
-			Valid: length != 0,
+		if err := rows.Scan(&column.Name, &column.Type); err != nil {
+			return types.Table{}, fmt.Errorf("error scanning row: %v", err)
 		}
 		columns = append(columns, column)
 	}
@@ -102,7 +85,6 @@ func (b *BigQuery) Schema(table string) (types.Table, error) {
 		Dataset:     b.Config.Database,
 		ColumnCount: int64(len(columns)),
 	}, nil
-
 }
 
 // Execute executes a query on BigQuery.

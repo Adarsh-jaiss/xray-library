@@ -1,6 +1,8 @@
 module github.com/thesaas-company/xray
 
-go 1.22
+go 1.22.2
+
+toolchain go1.22.3
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -47,6 +49,7 @@ require (
 	github.com/aws/smithy-go v1.14.2 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/dvsekhvalnov/jose2go v1.6.0 // indirect
+	github.com/elgs/gosqlcrud v0.0.0-20240405131937-de90abf1755a // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
