@@ -8,6 +8,11 @@ Before you begin, ensure you have the following:
 
 - Go installed on your machine.
 - Access to a Microsoft SQL Server instance.
+- You can run it locally using this command :
+
+    ```
+    docker run -p 14330:1433 -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=root' -d chriseaton/adventureworks:latest
+    ```
 - Environment variable `DB_PASSWORD` set to your database password.
 
 ## Getting Started
