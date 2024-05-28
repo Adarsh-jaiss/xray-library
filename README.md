@@ -25,6 +25,7 @@ go get github.com/thesaas-company/xray@latest
     - [BigQuery](./example/bigquery/README.md)
     - [snowflake](./example/snowflake/README.md)
     - [mssql](./example/mssql/README.md)
+- CLI Docs : [Getting started](./cli/README.md)
 
 ### Install xRay cli
 

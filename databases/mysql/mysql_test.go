@@ -4,10 +4,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/thesaas-company/xray/config"
 	"github.com/thesaas-company/xray/types"
 )
 
@@ -184,4 +187,198 @@ func TestGenerateCreateTablequery(t *testing.T) {
 		t.Errorf("there were unfulfilled expectations: %s", err)
 	}
 
+}
+
+func TestNewMySQL(t *testing.T) {
+	type args struct {
+		dbClient *sql.DB
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    types.ISQL
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewMySQL(tt.args.dbClient)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewMySQL() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewMySQL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewMySQLWithConfig(t *testing.T) {
+	type args struct {
+		dbConfig *config.Config
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    types.ISQL
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := NewMySQLWithConfig(tt.args.dbConfig)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NewMySQLWithConfig() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewMySQLWithConfig() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMySQL_Schema(t *testing.T) {
+	type args struct {
+		table string
+	}
+	tests := []struct {
+		name    string
+		m       *MySQL
+		args    args
+		want    types.Table
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.m.Schema(tt.args.table)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MySQL.Schema() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MySQL.Schema() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMySQL_Execute(t *testing.T) {
+	type args struct {
+		query string
+	}
+	tests := []struct {
+		name    string
+		m       *MySQL
+		args    args
+		want    []byte
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.m.Execute(tt.args.query)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MySQL.Execute() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MySQL.Execute() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMySQL_Tables(t *testing.T) {
+	type args struct {
+		databaseName string
+	}
+	tests := []struct {
+		name    string
+		m       *MySQL
+		args    args
+		want    []string
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.m.Tables(tt.args.databaseName)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MySQL.Tables() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MySQL.Tables() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMySQL_GenerateCreateTableQuery(t *testing.T) {
+	type args struct {
+		table types.Table
+	}
+	tests := []struct {
+		name string
+		m    *MySQL
+		args args
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.m.GenerateCreateTableQuery(tt.args.table); got != tt.want {
+				t.Errorf("MySQL.GenerateCreateTableQuery() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_convertTypeToMysql(t *testing.T) {
+	type args struct {
+		dataType string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := convertTypeToMysql(tt.args.dataType); got != tt.want {
+				t.Errorf("convertTypeToMysql() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_dbURLMySQL(t *testing.T) {
+	type args struct {
+		dbConfig *config.Config
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := dbURLMySQL(tt.args.dbConfig); got != tt.want {
+				t.Errorf("dbURLMySQL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
